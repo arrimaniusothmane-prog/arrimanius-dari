@@ -1,69 +1,193 @@
 import Image from "next/image";
+import Link from "next/link";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  BadgeCheck,
+  CalendarCheck,
+  ShieldCheck,
+} from "lucide-react";
+import { getProperties } from "@/services/propertyService";
+import { HeroSearch } from "@/components/sections/hero-search";
+import { FeaturedProperties } from "@/components/sections/featured-properties";
+import { PropertyCategory } from "@/types";
+import { Button } from "@/components/ui/button";
 
-export default function Home() {
+const categories: {
+  value: PropertyCategory;
+  title: string;
+  description: string;
+}[] = [
+  { value: PropertyCategory.VILLA, title: "Villas", description: "Plain-pied, piscine, palmiers" },
+  { value: PropertyCategory.APARTMENT, title: "Appartements", description: "Résidences neuves et premium" },
+  { value: PropertyCategory.HOUSE, title: "Maisons", description: "De ville et familiales" },
+  { value: PropertyCategory.LAND, title: "Terrains", description: "Constructibles et résidentiels" },
+  { value: PropertyCategory.COMMERCIAL, title: "Locaux", description: "Boutiques, bureaux, activités" },
+];
+
+export default async function HomePage() {
+  const properties = await getProperties();
+  const verified = properties.filter((p) => p.isVerified).length;
+  const cities = new Set(properties.map((p) => p.address.city)).size;
+  const countByCategory = (value: PropertyCategory) =>
+    properties.filter((p) => p.category === value).length;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+    <div>
+      {/* HERO */}
+      <section className="relative flex min-h-[94svh] items-end overflow-hidden">
         <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
+          src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=2400&h=1600&fit=crop"
+          alt="Villa moderne baignée de lumière dorée au Maroc"
+          fill
           priority
+          sizes="100vw"
+          className="object-cover"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/25" />
+
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-14 pt-40 sm:px-6 lg:px-8">
+          {/* Headline — the single visual statement */}
+          <div className="mx-auto max-w-4xl text-center">
+            <h1 className="text-hero text-balance text-white">
+              Trouvez un bien qui vaut la peine{" "}
+              <span className="italic text-gold">d&apos;être appelé maison.</span>
+            </h1>
+            <p className="mx-auto mt-6 max-w-xl text-pretty text-base text-white/80 sm:text-lg">
+              Appartements, villas et terrains sélectionnés — Casablanca,
+              Marrakech, Rabat. Des biens vérifiés, un accompagnement de la
+              visite à la signature.
+            </p>
+          </div>
+
+          {/* Glass search */}
+          <div className="mx-auto mt-10 max-w-4xl">
+            <HeroSearch />
+          </div>
+
+          {/* Trust stats */}
+          <div className="mx-auto mt-12 grid max-w-3xl grid-cols-2 gap-x-6 gap-y-6 border-t border-white/15 pt-6 sm:grid-cols-4">
+            <Stat value={String(properties.length)} label="Biens en ligne" />
+            <Stat value={String(verified)} label="Annonces vérifiées" />
+            <Stat value={String(cities)} label="Villes couvertes" />
+            <Stat value="4.9/5" label="Note moyenne acheteurs" />
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* FEATURED */}
+      <FeaturedProperties />
+
+      {/* CATEGORIES — editorial index */}
+      <section className="border-y border-line bg-sand/50 py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 flex flex-col gap-2">
+            <h2 className="font-display text-3xl font-semibold sm:text-4xl">
+              Parcourir par type
+            </h2>
+            <p className="max-w-md text-muted-foreground">
+              Toutes les annonces vérifiées, classées par nature de bien.
+            </p>
+          </div>
+
+          <div className="divide-y divide-border/70 border-y border-border/70">
+            {categories.map((c) => (
+              <Link
+                key={c.value}
+                href={`/properties?category=${c.value}`}
+                className="group flex items-center justify-between gap-6 py-6 transition-colors sm:py-8"
+              >
+                <div className="min-w-0">
+                  <h3 className="font-display text-2xl font-semibold transition-colors group-hover:text-gold-strong sm:text-3xl">
+                    {c.title}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{c.description}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-4">
+                  <span className="tnum text-sm font-medium text-muted-foreground">
+                    {countByCategory(c.value)} biens
+                  </span>
+                  <span className="flex size-11 items-center justify-center rounded-full border border-border bg-card transition-all duration-300 group-hover:border-gold group-hover:bg-gold group-hover:text-ink">
+                    <ArrowUpRight className="size-5" />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-6 text-right">
+            <Link
+              href="/properties"
+              className="inline-flex items-center gap-2 text-sm font-medium text-gold-strong hover:underline"
+            >
+              Voir toutes les annonces <ArrowRight className="size-4" />
+            </Link>
+          </div>
         </div>
-      </main>
+      </section>
+
+      {/* TRUST — quiet strip */}
+      <section className="py-16">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-8 sm:grid-cols-3">
+            {[
+              { icon: ShieldCheck, text: "Chaque annonce est contrôlée avant publication." },
+              { icon: BadgeCheck, text: "Propriétaires et agences certifiés." },
+              { icon: CalendarCheck, text: "Visites organisées et accompagnées." },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.text} className="flex items-start gap-3">
+                  <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold-strong">
+                    <Icon className="size-4.5" />
+                  </span>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{item.text}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA BANNER */}
+      <section className="relative overflow-hidden bg-ink py-16">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 px-4 sm:px-6 lg:flex-row lg:px-8">
+          <div className="max-w-xl text-center lg:text-left">
+            <h2 className="font-display text-3xl font-semibold text-white">
+              Vous êtes propriétaire ou agent immobilier ?
+            </h2>
+            <p className="mt-3 text-pretty text-white/70">
+              Publiez votre bien en quelques minutes et recevez des demandes
+              qualifiées de la part d&apos;acheteurs sérieux.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link href="/publish">
+              <Button size="lg" className="rounded-full bg-gold text-ink hover:bg-gold/90">
+                Publier un bien
+              </Button>
+            </Link>
+            <Link href="/seller">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full border-white/30 text-white hover:bg-white/10 hover:text-white"
+              >
+                Espace vendeur
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="text-center sm:text-left">
+      <p className="tnum font-display text-2xl font-semibold text-white">{value}</p>
+      <p className="mt-0.5 text-xs text-white/60">{label}</p>
     </div>
   );
 }
