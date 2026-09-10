@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const tabs = [
-  { id: "acheter", label: "Acheter" },
-  { id: "vendre", label: "Vendre" },
-  { id: "investir", label: "Investir" },
+  { id: "acheter", label: "Acheter", href: "/buy" },
+  { id: "vendre", label: "Vendre", href: "/sell" },
+  { id: "investir", label: "Investir", href: "/invest" },
 ];
 
 const propertyTypes = [
@@ -42,11 +42,20 @@ export function HeroSearch() {
   return (
     <div className="mx-auto w-full max-w-4xl">
       {/* Tabs */}
-      <div className="mb-4 flex justify-center gap-1">
+      <div
+        role="tablist"
+        aria-label="Objectif de recherche"
+        className="mb-4 flex justify-center gap-1"
+      >
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            onClick={() => {
+              setActiveTab(tab.id);
+              router.push(tab.href);
+            }}
             className={cn(
               "rounded-full px-5 py-2 text-sm font-medium backdrop-blur-md transition-all",
               activeTab === tab.id

@@ -17,6 +17,10 @@ export const metadata = {
   title: "Espace Professionnel & Agences",
   description:
     "Rejoignez le réseau immobilier professionnel DarEstate au Maroc. Programme agences dédié, diffusion multi-canal, leads prioritaires et outils de gestion avancés.",
+  alternates: {
+    canonical: "/agent",
+    languages: { fr: "/agent", en: "/agent", ar: "/agent" },
+  },
 };
 
 const benefits = [

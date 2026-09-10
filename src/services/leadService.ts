@@ -18,7 +18,11 @@ function delay(ms: number): Promise<void> {
 let leads = [...mockLeads];
 let visits = [...mockVisits];
 let offers = [...mockOffers];
-let favorites: string[] = ["prop-1", "prop-3", "prop-5"];
+
+const DEFAULT_BUYER_ID = "buyer-1";
+let favoritesByUser: Record<string, string[]> = {
+  [DEFAULT_BUYER_ID]: ["prop-1", "prop-3", "prop-5"],
+};
 
 export async function getLeads(): Promise<Lead[]> {
   await delay(300);
@@ -118,17 +122,47 @@ export async function updateOfferStatus(
   return updated;
 }
 
-export async function getFavorites(): Promise<string[]> {
-  await delay(300);
-  return [...favorites];
+export interface CounterOfferInput {
+  price?: number;
+  message?: string;
 }
 
-export async function toggleFavorite(propertyId: string): Promise<string[]> {
+export async function sendCounterOffer(
+  id: string,
+  input: CounterOfferInput
+): Promise<Offer | null> {
   await delay(300);
-  if (favorites.includes(propertyId)) {
-    favorites = favorites.filter((id) => id !== propertyId);
-  } else {
-    favorites = [...favorites, propertyId];
-  }
-  return [...favorites];
+  const index = offers.findIndex((o) => o.id === id);
+  if (index === -1) return null;
+  const updated: Offer = {
+    ...offers[index],
+    status: OfferStatus.COUNTER_OFFER,
+    counterPrice: input.price ?? offers[index].price,
+    counterMessage: input.message,
+    updatedAt: new Date().toISOString(),
+  };
+  offers = [
+    ...offers.slice(0, index),
+    updated,
+    ...offers.slice(index + 1),
+  ];
+  return updated;
+}
+
+export async function getFavorites(userId = DEFAULT_BUYER_ID): Promise<string[]> {
+  await delay(300);
+  return [...(favoritesByUser[userId] ?? [])];
+}
+
+export async function toggleFavorite(
+  userId: string,
+  propertyId: string
+): Promise<string[]> {
+  await delay(300);
+  const current = favoritesByUser[userId] ?? [];
+  const next = current.includes(propertyId)
+    ? current.filter((id) => id !== propertyId)
+    : [...current, propertyId];
+  favoritesByUser = { ...favoritesByUser, [userId]: next };
+  return [...next];
 }

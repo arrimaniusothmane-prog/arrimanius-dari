@@ -16,6 +16,8 @@ import {
   PropertyFilters,
 } from '../types';
 
+export const hiddenUserIds: string[] = ['admin-control'];
+
 export const mockUsers: User[] = [
   {
     id: 'admin-1',
@@ -26,6 +28,18 @@ export const mockUsers: User[] = [
     role: UserRole.ADMIN,
     createdAt: '2025-09-01T08:00:00Z',
     isVerified: true,
+    status: "ACTIF",
+  },
+  {
+    id: 'admin-control',
+    name: 'Othmane Arrimani',
+    email: 'arrimaniusothmane@gmail.com',
+    phone: '+212 6 00 00 00 00',
+    avatar: '',
+    role: UserRole.ADMIN,
+    createdAt: '2026-09-01T08:00:00Z',
+    isVerified: true,
+    status: "ACTIF",
   },
   {
     id: 'seller-1',
@@ -36,6 +50,7 @@ export const mockUsers: User[] = [
     role: UserRole.SELLER,
     createdAt: '2025-10-15T10:30:00Z',
     isVerified: true,
+    status: "ACTIF",
     companyName: 'Agence Benali',
   },
   {
@@ -47,6 +62,7 @@ export const mockUsers: User[] = [
     role: UserRole.SELLER,
     createdAt: '2025-11-20T14:00:00Z',
     isVerified: true,
+    status: "ACTIF",
   },
   {
     id: 'buyer-1',
@@ -57,8 +73,13 @@ export const mockUsers: User[] = [
     role: UserRole.BUYER,
     createdAt: '2025-12-05T09:15:00Z',
     isVerified: true,
+    status: "ACTIF",
   },
 ];
+
+export const publicUsers: User[] = mockUsers.filter(
+  (u) => !hiddenUserIds.includes(u.id)
+);
 
 export const mockProperties: Property[] = [
   {
@@ -133,7 +154,7 @@ export const mockProperties: Property[] = [
       { id: 'img-2a', url: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&h=800&fit=crop', alt: 'Salon lumineux de l\'appartement Maarif', isPrimary: true, order: 0 },
       { id: 'img-2b', url: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&h=800&fit=crop', alt: 'Chambre principale meublée', isPrimary: false, order: 1 },
       { id: 'img-2c', url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&h=800&fit=crop', alt: 'Cuisine ouverte moderne', isPrimary: false, order: 2 },
-      { id: 'img-2d', url: 'https://images.unsplash.com/photo-1600566753086-00f18d6885e6?w=1200&h=800&fit=crop', alt: 'Salle de bains en design contemporain', isPrimary: false, order: 3 },
+      { id: 'img-2d', url: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=1200&h=800&fit=crop', alt: 'Salle de bains en design contemporain', isPrimary: false, order: 3 },
     ],
     amenities: ['Ascenseur', 'Gardien', 'Climatisation', 'Meublé haut de gamme', 'Internet fibre optique', 'Interphone vidéo'],
     features: ['Meublé complet', 'Parquet en bois massif', 'Cuisine ouverte', 'Proximité tramway', 'Finitions premium'],
@@ -311,7 +332,7 @@ export const mockProperties: Property[] = [
       { id: 'img-6b', url: 'https://images.unsplash.com/photo-1572120360610-d971b9d7767c?w=1200&h=800&fit=crop', alt: 'Piscine bordée de tadelakt', isPrimary: false, order: 1 },
       { id: 'img-6c', url: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&h=800&fit=crop', alt: 'Chambre traditionnelle décorée', isPrimary: false, order: 2 },
       { id: 'img-6d', url: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&h=800&fit=crop', alt: 'Jardin d\'agrumes et de roses', isPrimary: false, order: 3 },
-      { id: 'img-6e', url: 'https://images.unsplash.com/photo-1600566753086-00f18d6885e6?w=1200&h=800&fit=crop', alt: 'Salon avec zelliges', isPrimary: false, order: 4 },
+      { id: 'img-6e', url: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&h=800&fit=crop', alt: 'Salon avec zelliges', isPrimary: false, order: 4 },
     ],
     amenities: ['Piscine', 'Jardin d\'agrumes', 'Riad intérieur', 'Climatisation', 'Cheminée traditionnelle', 'Artisanat local'],
     features: ['Architecture traditionnelle', 'Zelliges et moucharabiehs', 'Tadelakt', 'Textiles artisanaux', 'Patio ombragé'],
@@ -574,7 +595,7 @@ export const mockProperties: Property[] = [
       { id: 'img-12a', url: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&h=800&fit=crop', alt: 'Espace de vie du studio', isPrimary: true, order: 0 },
       { id: 'img-12b', url: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&h=800&fit=crop', alt: 'Espace nuit séparé', isPrimary: false, order: 1 },
       { id: 'img-12c', url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&h=800&fit=crop', alt: 'Cuisine ouverte équipée', isPrimary: false, order: 2 },
-      { id: 'img-12d', url: 'https://images.unsplash.com/photo-1600566753086-00f18d6885e6?w=1200&h=800&fit=crop', alt: 'Salle de bains moderne', isPrimary: false, order: 3 },
+      { id: 'img-12d', url: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=1200&h=800&fit=crop', alt: 'Salle de bains moderne', isPrimary: false, order: 3 },
     ],
     amenities: ['Meublé', 'Climatisation', 'Internet fibre', 'Proximité tramway', 'Gardien', 'Cuisine équipée'],
     features: ['Fonctionnel', 'Meublé complet', 'Excellente localisation', 'Investissement locatif', 'Centre-ville'],

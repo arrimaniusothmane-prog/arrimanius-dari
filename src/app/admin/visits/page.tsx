@@ -4,29 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, Clock, Users, Phone, CalendarCheck2 } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getVisits } from "@/services/leadService";
-import { mockProperties } from "@/data/properties";
+import {
+  propertyById,
+  visitStatusLabel,
+  visitStatusBadge,
+} from "@/lib/labels";
 import { LeadStatus } from "@/types";
 import type { Visit } from "@/types";
 import { formatDate, formatTime, cn } from "@/lib/utils";
-
-const statusLabel: Record<string, string> = {
-  [LeadStatus.VISIT_REQUESTED]: "À venir",
-  [LeadStatus.VISIT_COMPLETED]: "Terminée",
-  [LeadStatus.CANCELLED]: "Annulée",
-};
-
-const statusBadge: Record<string, string> = {
-  [LeadStatus.VISIT_REQUESTED]: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  [LeadStatus.VISIT_COMPLETED]: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  [LeadStatus.CANCELLED]: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
-};
-
-function propertyFor(propertyId: string) {
-  return mockProperties.find((p) => p.id === propertyId);
-}
 
 export default function AdminVisitsPage() {
   const [visits, setVisits] = useState<Visit[]>([]);
@@ -40,7 +28,11 @@ export default function AdminVisitsPage() {
   }, []);
 
   const total = visits.length;
-  const upcoming = visits.filter((v) => v.status === LeadStatus.VISIT_REQUESTED).length;
+  const upcoming = visits.filter(
+    (v) =>
+      v.status === LeadStatus.VISIT_REQUESTED ||
+      v.status === LeadStatus.VISIT_CONFIRMED
+  ).length;
   const completed = visits.filter((v) => v.status === LeadStatus.VISIT_COMPLETED).length;
 
   const sorted = [...visits].sort((a, b) => a.date.localeCompare(b.date));
@@ -87,7 +79,7 @@ export default function AdminVisitsPage() {
       ) : (
         <div className="space-y-3">
           {sorted.map((visit) => {
-            const property = propertyFor(visit.propertyId);
+            const property = propertyById(visit.propertyId);
             return (
               <div
                 key={visit.id}
@@ -115,9 +107,13 @@ export default function AdminVisitsPage() {
                     </span>
                   </div>
                 </div>
-                <Badge className={cn("shrink-0 self-start border-transparent sm:self-center", statusBadge[visit.status])}>
-                  {statusLabel[visit.status]}
-                </Badge>
+                <StatusBadge
+                  className={cn(
+                    "shrink-0 self-start sm:self-center",
+                    visitStatusBadge[visit.status]
+                  )}
+                  label={visitStatusLabel[visit.status] ?? visit.status}
+                />
               </div>
             );
           })}

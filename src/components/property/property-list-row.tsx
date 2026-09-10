@@ -1,28 +1,24 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { MapPin, Bath, BedDouble, Ruler, Heart, BadgeCheck, ArrowRight } from "lucide-react";
 import type { Property } from "@/types";
 import { formatPrice, cn } from "@/lib/utils";
+import { categoryLabel } from "@/lib/labels";
+import { useFavorites } from "@/hooks/useProperties";
 import { Badge } from "@/components/ui/badge";
-
-const categoryLabels: Record<string, string> = {
-  APARTMENT: "Appartement",
-  VILLA: "Villa",
-  HOUSE: "Maison",
-  LAND: "Terrain",
-  COMMERCIAL: "Commercial",
-};
 
 export function PropertyListRow({ property }: { property: Property }) {
   const [imageError, setImageError] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(property.favoriteCount > 20);
+  const { favorites, toggleFavorite } = useFavorites();
+  const isFavorite = favorites.includes(property.id);
 
   const primaryImage = property.images.find((i) => i.isPrimary) ?? property.images[0];
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all duration-300 hover:shadow-lg sm:flex-row">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all duration-300 hover:shadow-lg sm:flex-row">
       {/* Image */}
       <div className="relative aspect-[16/9] shrink-0 overflow-hidden sm:aspect-auto sm:w-72">
         {primaryImage && !imageError ? (
@@ -37,22 +33,20 @@ export function PropertyListRow({ property }: { property: Property }) {
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-muted text-muted-foreground">
-            {categoryLabels[property.category]}
+            {categoryLabel[property.category]}
           </div>
         )}
-        <Badge className="absolute left-3 top-3 bg-black/40 text-white backdrop-blur-md">
-          {categoryLabels[property.category]}
+        <Badge className="pointer-events-none absolute left-3 top-3 bg-black/40 text-white backdrop-blur-md">
+          {categoryLabel[property.category]}
         </Badge>
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            setIsFavorite(!isFavorite);
-          }}
+          onClick={() => toggleFavorite(property.id)}
           className={cn(
-            "absolute right-3 top-3 flex size-8 items-center justify-center rounded-full backdrop-blur-md transition-all",
+            "absolute right-3 top-3 z-10 flex size-8 items-center justify-center rounded-full backdrop-blur-md transition-all active:scale-90",
             isFavorite ? "bg-gold text-white" : "bg-black/30 text-white hover:bg-black/50"
           )}
-          aria-label="Favori"
+          aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+          aria-pressed={isFavorite}
         >
           <Heart className={cn("size-4", isFavorite && "fill-current")} />
         </button>
@@ -103,6 +97,12 @@ export function PropertyListRow({ property }: { property: Property }) {
           </span>
         </div>
       </div>
+
+      <Link
+        href={`/properties/${property.slug}`}
+        aria-label={`Voir ${property.title}`}
+        className="absolute inset-0 z-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+      />
     </div>
   );
 }

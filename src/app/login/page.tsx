@@ -13,7 +13,6 @@ import { Alert } from "@/components/ui/alert";
 const demoAccounts = [
   { label: "Acheteur", email: "youssef@example.com", role: "BUYER" },
   { label: "Vendeur", email: "mohamed@example.com", role: "SELLER" },
-  { label: "Admin", email: "admin@darestimate.ma", role: "ADMIN" },
 ];
 
 export default function LoginPage() {
@@ -29,25 +28,38 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const user = await login(email, password);
+    const result = await login(email, password);
     setLoading(false);
-    if (!user) {
-      setError("Adresse email introuvable. Vérifiez vos informations.");
+    if (!result.ok) {
+      setError(result.error);
       return;
     }
-    if (user.role === "ADMIN") router.push("/admin");
-    else if (user.role === "SELLER" || user.role === "AGENT") router.push("/seller");
+    const user = result.user;
+    const isMainAdmin =
+      user.role === "ADMIN" &&
+      user.email.trim().toLowerCase() === "arrimaniusothmane@gmail.com";
+    if (isMainAdmin) router.push("/admin");
+    else if (user.role === "SELLER" || user.role === "AGENT")
+      router.push("/seller");
     else router.push("/buyer");
   };
 
   const quickLogin = async (demoEmail: string) => {
     setError(null);
     setLoading(true);
-    const user = await login(demoEmail, "demo");
+    const result = await login(demoEmail, "demo1234");
     setLoading(false);
-    if (!user) return;
-    if (user.role === "ADMIN") router.push("/admin");
-    else if (user.role === "SELLER" || user.role === "AGENT") router.push("/seller");
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    const user = result.user;
+    const isMainAdmin =
+      user.role === "ADMIN" &&
+      user.email.trim().toLowerCase() === "arrimaniusothmane@gmail.com";
+    if (isMainAdmin) router.push("/admin");
+    else if (user.role === "SELLER" || user.role === "AGENT")
+      router.push("/seller");
     else router.push("/buyer");
   };
 

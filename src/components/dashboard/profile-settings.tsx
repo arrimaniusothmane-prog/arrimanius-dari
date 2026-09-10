@@ -11,6 +11,9 @@ import {
   Trash2,
   UserRound,
   Building2,
+  MapPin,
+  ShieldCheck,
+  IdCard,
 } from "lucide-react";
 import { UserRole } from "@/types";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -20,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -38,9 +42,12 @@ const roleLabels: Record<UserRole, string> = {
 };
 
 const roleSubtitles: Record<UserRole, string> = {
-  [UserRole.BUYER]: "Gérez vos informations personnelles.",
-  [UserRole.SELLER]: "Gérez vos informations personnelles et vos préférences.",
-  [UserRole.AGENT]: "Gérez vos informations personnelles et vos préférences.",
+  [UserRole.BUYER]:
+    "Gérez vos informations personnelles et vos critères de recherche.",
+  [UserRole.SELLER]:
+    "Gérez vos informations personnelles, votre agence et vos préférences.",
+  [UserRole.AGENT]:
+    "Gérez vos informations professionnelles et vos préférences.",
   [UserRole.ADMIN]: "Gérez votre compte d'administrateur.",
 };
 
@@ -147,12 +154,16 @@ export function ProfileSettings() {
   const { user, updateProfile } = useAuth();
 
   const role: UserRole = user?.role ?? UserRole.BUYER;
-  const showCompany = role === UserRole.SELLER || role === UserRole.AGENT;
+  const isProfessional =
+    role === UserRole.SELLER || role === UserRole.AGENT;
 
   const [name, setName] = useState(user?.name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [company, setCompany] = useState(user?.companyName ?? "");
+  const [bio, setBio] = useState(user?.bio ?? "");
+  const [location, setLocation] = useState(user?.location ?? "");
+  const [license, setLicense] = useState(user?.licenseNumber ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [language, setLanguage] = useState("fr");
@@ -164,6 +175,9 @@ export function ProfileSettings() {
     setEmail(user.email ?? "");
     setPhone(user.phone ?? "");
     setCompany(user.companyName ?? "");
+    setBio(user.bio ?? "");
+    setLocation(user.location ?? "");
+    setLicense(user.licenseNumber ?? "");
   }
 
   const [toggles, setToggles] = useState<Record<string, boolean>>(() =>
@@ -185,7 +199,8 @@ export function ProfileSettings() {
       name,
       email,
       phone,
-      ...(showCompany ? { companyName: company } : {}),
+      ...(isProfessional ? { companyName: company, bio, location } : {}),
+      ...(role === UserRole.AGENT && license ? { licenseNumber: license } : {}),
     });
     setSaving(false);
     if (updated) {
@@ -217,7 +232,7 @@ export function ProfileSettings() {
     <div>
       <DashboardHeader title="Profil" subtitle={roleSubtitles[role]} />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,400px)_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,460px)_1fr]">
         {/* Identity */}
         <form onSubmit={handleSave} className="h-fit">
           <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
@@ -236,16 +251,22 @@ export function ProfileSettings() {
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <h2 className="mt-4 font-display text-lg font-semibold">
-                {name}
-              </h2>
+              <h2 className="mt-4 font-display text-lg font-semibold">{name}</h2>
               <p className="text-sm text-muted-foreground">{email}</p>
-              <Badge className="mt-2 rounded-full border-transparent bg-sand text-gold-strong">
-                {roleLabels[role]}
-              </Badge>
-              {user?.isVerified && (
-                <p className="mt-2 flex items-center gap-1 text-xs font-medium text-gold-strong">
-                  <BadgeCheck className="size-3.5" /> Compte vérifié
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                <Badge className="rounded-full border-transparent bg-sand text-gold-strong">
+                  {roleLabels[role]}
+                </Badge>
+                {user?.isVerified && (
+                  <span className="flex items-center gap-1 rounded-full bg-gold/15 px-2.5 py-0.5 text-xs font-semibold text-gold-strong">
+                    <BadgeCheck className="size-3.5" /> Vérifié
+                  </span>
+                )}
+              </div>
+              {isProfessional && company && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {company}
+                  {location ? ` · ${location}` : ""}
                 </p>
               )}
             </div>
@@ -281,19 +302,62 @@ export function ProfileSettings() {
                   onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
-              {showCompany && (
-                <div className="space-y-2">
-                  <Label htmlFor="settings-company">Nom de l&apos;agence</Label>
-                  <div className="relative">
-                    <Building2 className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="settings-company"
-                      className="pl-8"
-                      value={company}
-                      onChange={(e) => setCompany(e.target.value)}
+
+              {isProfessional && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="settings-company">Nom de l&apos;agence</Label>
+                    <div className="relative">
+                      <Building2 className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="settings-company"
+                        className="pl-8"
+                        value={company}
+                        onChange={(e) => setCompany(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="settings-location">Ville</Label>
+                    <div className="relative">
+                      <MapPin className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="settings-location"
+                        className="pl-8"
+                        placeholder="Ex : Casablanca"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  {role === UserRole.AGENT && (
+                    <div className="space-y-2">
+                      <Label htmlFor="settings-license">
+                        N° de carte professionnelle
+                      </Label>
+                      <div className="relative">
+                        <IdCard className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          id="settings-license"
+                          className="pl-8"
+                          placeholder="Ex : 01-2345-2025"
+                          value={license}
+                          onChange={(e) => setLicense(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="settings-bio">Présentation</Label>
+                    <Textarea
+                      id="settings-bio"
+                      rows={3}
+                      placeholder="Décrivez votre activité, votre expérience, vos spécialités…"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
                     />
                   </div>
-                </div>
+                </>
               )}
 
               <Button
@@ -318,6 +382,45 @@ export function ProfileSettings() {
 
         {/* Settings */}
         <div className="space-y-6">
+          {/* Verified card */}
+          <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-sand text-gold-strong">
+                <ShieldCheck className="size-5" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-semibold">
+                  Vérification du compte
+                </h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Statut de votre identité sur la plateforme.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-between rounded-xl bg-sand/60 p-4">
+              <div>
+                <p className="text-sm font-medium">
+                  {user?.isVerified ? "Identité vérifiée" : "Vérification en attente"}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {user?.isVerified
+                    ? "Votre identité a été confirmée."
+                    : "Complétez votre dossier pour obtenir le badge vérifié."}
+                </p>
+              </div>
+              <Badge
+                className={cn(
+                  "rounded-full border-transparent",
+                  user?.isVerified
+                    ? "bg-emerald-500/15 text-emerald-600"
+                    : "bg-amber-500/15 text-amber-600"
+                )}
+              >
+                {user?.isVerified ? "Vérifié" : "En cours"}
+              </Badge>
+            </div>
+          </div>
+
           {/* Notifications */}
           <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
             <div className="flex items-center gap-3">
@@ -325,9 +428,7 @@ export function ProfileSettings() {
                 <BellRing className="size-5" />
               </div>
               <div>
-                <h3 className="font-display text-lg font-semibold">
-                  Notifications
-                </h3>
+                <h3 className="font-display text-lg font-semibold">Notifications</h3>
                 <p className="mt-0.5 text-sm text-muted-foreground">
                   Choisissez les notifications que vous souhaitez recevoir.
                 </p>
@@ -364,9 +465,7 @@ export function ProfileSettings() {
                 <Languages className="size-5" />
               </div>
               <div>
-                <h3 className="font-display text-lg font-semibold">
-                  Préférences
-                </h3>
+                <h3 className="font-display text-lg font-semibold">Préférences</h3>
                 <p className="mt-0.5 text-sm text-muted-foreground">
                   Langue et préférences régionales.
                 </p>
@@ -377,10 +476,7 @@ export function ProfileSettings() {
               <Label htmlFor="settings-language" className="text-sm">
                 Langue d&apos;affichage
               </Label>
-              <Select
-                value={language}
-                onValueChange={(value) => setLanguage(value ?? "fr")}
-              >
+              <Select value={language} onValueChange={(value) => setLanguage(value ?? "fr")}>
                 <SelectTrigger
                   id="settings-language"
                   className="mt-2"

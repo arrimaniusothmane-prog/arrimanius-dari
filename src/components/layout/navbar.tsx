@@ -36,15 +36,15 @@ export function Navbar() {
   }, []);
 
   const links = [
-    { href: "/buy", label: t("nav.acheter") },
-    { href: "/sell", label: t("nav.vendre") },
     { href: "/invest", label: t("nav.investir") },
+    { href: "/construction", label: t("nav.travaux") },
     { href: "/properties", label: t("nav.nosBiens") },
     { href: "/about", label: t("nav.apropos") },
   ];
 
   const dashboardHref =
-    user?.role === UserRole.ADMIN
+    user?.role === UserRole.ADMIN &&
+    user.email.trim().toLowerCase() === "arrimaniusothmane@gmail.com"
       ? "/admin"
       : user?.role === UserRole.SELLER || user?.role === UserRole.AGENT
       ? "/seller"

@@ -19,20 +19,13 @@ import {
 } from "lucide-react";
 import type { Property } from "@/types";
 import { formatPrice } from "@/lib/utils";
+import { categoryLabel } from "@/lib/labels";
 import { PropertyGallery } from "@/components/property/property-gallery";
 import { ContactSellerModal } from "@/components/modals/contact-seller-modal";
 import { RequestVisitModal } from "@/components/modals/request-visit-modal";
 import { MakeOfferModal } from "@/components/modals/make-offer-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-const categoryLabels: Record<string, string> = {
-  APARTMENT: "Appartement",
-  VILLA: "Villa",
-  HOUSE: "Maison",
-  LAND: "Terrain",
-  COMMERCIAL: "Commercial",
-};
 
 export function PropertyDetail({ property }: { property: Property }) {
   const [contactOpen, setContactOpen] = useState(false);
@@ -59,7 +52,7 @@ export function PropertyDetail({ property }: { property: Property }) {
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge className="bg-gold/15 text-gold-strong hover:bg-gold/25">
-              {categoryLabels[property.category]}
+              {categoryLabel[property.category]}
             </Badge>
             {property.isVerified && (
               <Badge className="bg-[oklch(0.85_0.04_150)] text-[oklch(0.35_0.08_150)] hover:bg-[oklch(0.82_0.04_150)]">
@@ -227,7 +220,7 @@ export function PropertyDetail({ property }: { property: Property }) {
                 className="flex w-full items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
               >
                 <Phone className="size-4 text-gold" />
-                {showPhone ? "+212 6 12 34 56 78" : "Afficher le téléphone"}
+                {showPhone ? (seller?.phone ?? "+212 5 22 00 00 00") : "Afficher le téléphone"}
               </button>
               <Button
                 onClick={() => setContactOpen(true)}
@@ -282,7 +275,7 @@ export function PropertyDetail({ property }: { property: Property }) {
             {formatPrice(property.price)}
           </p>
           <p className="text-[11px] text-muted-foreground">
-            {categoryLabels[property.category]} · {property.surface} m²
+            {categoryLabel[property.category]} · {property.surface} m²
           </p>
         </div>
         <Button

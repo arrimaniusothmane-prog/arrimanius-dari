@@ -15,29 +15,18 @@ import type { Visit } from "@/types";
 import { LeadStatus } from "@/types";
 import { getVisits } from "@/services/leadService";
 import { mockProperties } from "@/data/properties";
+import {
+  propertyById,
+  visitStatusLabel,
+  visitStatusBadge,
+} from "@/lib/labels";
 import { DashboardHeader } from "@/components/dashboard/dashboard-shell";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDate, formatTime, cn } from "@/lib/utils";
-
-const SELLER_ID = "seller-1";
-
-const statusLabel: Record<string, string> = {
-  [LeadStatus.VISIT_REQUESTED]: "À confirmer",
-  [LeadStatus.VISIT_COMPLETED]: "Effectuée",
-  [LeadStatus.CANCELLED]: "Annulée",
-};
-
-const statusBadgeClass: Record<string, string> = {
-  [LeadStatus.VISIT_REQUESTED]: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  [LeadStatus.VISIT_COMPLETED]: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  [LeadStatus.CANCELLED]: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
-};
-
-function propertyFor(propertyId: string) {
-  return mockProperties.find((p) => p.id === propertyId);
-}
+import { formatDate, formatTime } from "@/lib/utils";
+import { useCurrentSellerId } from "@/hooks/useCurrentSeller";
 
 function VisitCard({
   visit,
@@ -46,8 +35,8 @@ function VisitCard({
   visit: Visit;
   onDecision: (visitId: string, status: LeadStatus) => void;
 }) {
-  const property = propertyFor(visit.propertyId);
-  const upcoming = visit.status === LeadStatus.VISIT_REQUESTED;
+  const property = propertyById(visit.propertyId);
+  const pending = visit.status === LeadStatus.VISIT_REQUESTED;
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
@@ -74,9 +63,10 @@ function VisitCard({
             </span>
           </div>
         </div>
-        <Badge className={cn("border-transparent", statusBadgeClass[visit.status])}>
-          {statusLabel[visit.status]}
-        </Badge>
+        <StatusBadge
+          className={visitStatusBadge[visit.status]}
+          label={visitStatusLabel[visit.status] ?? visit.status}
+        />
       </div>
 
       {visit.message && (
@@ -85,15 +75,15 @@ function VisitCard({
         </p>
       )}
 
-      {upcoming && (
+      {pending && (
         <div className="mt-4 flex items-center gap-3 border-t border-border/60 pt-4">
           <span className="mr-auto text-sm text-muted-foreground">Confirmer cette visite ?</span>
           <Button
             size="sm"
             className="rounded-full bg-emerald-600 text-white hover:bg-emerald-600/90"
-            onClick={() => onDecision(visit.id, LeadStatus.VISIT_COMPLETED)}
+            onClick={() => onDecision(visit.id, LeadStatus.VISIT_CONFIRMED)}
           >
-            <Check className="size-4" /> Accepter
+            <Check className="size-4" /> Confirmer
           </Button>
           <Button
             size="sm"
@@ -112,25 +102,30 @@ function VisitCard({
 export default function SellerVisitsPage() {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
+  const sellerId = useCurrentSellerId();
 
   useEffect(() => {
     getVisits()
       .then((all) => {
         const sellerProps = mockProperties
-          .filter((p) => p.sellerId === SELLER_ID)
+          .filter((p) => p.sellerId === sellerId)
           .map((p) => p.id);
         setVisits(all.filter((v) => sellerProps.includes(v.propertyId)));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [sellerId]);
 
   const handleDecision = (visitId: string, status: LeadStatus) => {
     setVisits((prev) => prev.map((v) => (v.id === visitId ? { ...v, status } : v)));
   };
 
   const upcoming = visits
-    .filter((v) => v.status === LeadStatus.VISIT_REQUESTED)
+    .filter(
+      (v) =>
+        v.status === LeadStatus.VISIT_REQUESTED ||
+        v.status === LeadStatus.VISIT_CONFIRMED
+    )
     .sort((a, b) => a.date.localeCompare(b.date));
   const completed = visits.filter(
     (v) => v.status === LeadStatus.VISIT_COMPLETED || v.status === LeadStatus.CANCELLED

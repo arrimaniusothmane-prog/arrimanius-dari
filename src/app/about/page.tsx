@@ -15,6 +15,10 @@ export const metadata = {
   title: "À propos de DarEstate",
   description:
     "DarEstate, la marketplace immobilière de confiance au Maroc. Découvrez notre mission, nos valeurs et l'histoire de notre plateforme.",
+  alternates: {
+    canonical: "/about",
+    languages: { fr: "/about", en: "/about", ar: "/about" },
+  },
 };
 
 const values = [
@@ -78,7 +82,7 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="relative flex min-h-[60vh] items-center overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1603228254119-e6d4d0959943?w=2000&h=1300&fit=crop"
+          src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=2000&h=1300&fit=crop"
           alt="Accueil moderne d'une propriété premium DarEstate"
           fill
           priority

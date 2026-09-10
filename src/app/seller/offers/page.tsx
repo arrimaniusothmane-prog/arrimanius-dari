@@ -8,46 +8,62 @@ import {
   TrendingUp,
   TrendingDown,
   Loader2,
+  MessageSquareReply,
+  MapPin,
+  Phone,
+  Mail,
 } from "lucide-react";
 import type { Offer } from "@/types";
 import { OfferStatus } from "@/types";
-import { getOffers, updateOfferStatus } from "@/services/leadService";
-import { mockProperties } from "@/data/properties";
+import {
+  getOffers,
+  updateOfferStatus,
+  sendCounterOffer,
+} from "@/services/leadService";
+import {
+  propertyById,
+  userById,
+  offerStatusLabel,
+  offerStatusBadge,
+} from "@/lib/labels";
 import { DashboardHeader } from "@/components/dashboard/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatPrice, formatDate, cn } from "@/lib/utils";
-
-const statusLabel: Record<OfferStatus, string> = {
-  [OfferStatus.PENDING]: "En attente",
-  [OfferStatus.ACCEPTED]: "Acceptée",
-  [OfferStatus.REJECTED]: "Refusée",
-  [OfferStatus.COUNTER_OFFER]: "Contre-offre",
-};
-
-const statusBadgeClass: Record<OfferStatus, string> = {
-  [OfferStatus.PENDING]: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  [OfferStatus.ACCEPTED]: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  [OfferStatus.REJECTED]: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
-  [OfferStatus.COUNTER_OFFER]: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
-};
-
-function propertyFor(propertyId: string) {
-  return mockProperties.find((p) => p.id === propertyId);
-}
+import { useCurrentSellerId } from "@/hooks/useCurrentSeller";
 
 export default function SellerOffersPage() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const sellerId = useCurrentSellerId();
+
+  const [counterTarget, setCounterTarget] = useState<Offer | null>(null);
+  const [counterPrice, setCounterPrice] = useState("");
+  const [counterMessage, setCounterMessage] = useState("");
+  const [counterSending, setCounterSending] = useState(false);
 
   useEffect(() => {
     getOffers()
-      .then(setOffers)
+      .then((all) =>
+        setOffers(
+          all.filter((o) => propertyById(o.propertyId)?.sellerId === sellerId)
+        )
+      )
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [sellerId]);
 
   const handleStatus = async (offer: Offer, status: OfferStatus) => {
     setBusyId(offer.id);
@@ -58,6 +74,35 @@ export default function SellerOffersPage() {
       }
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const openCounter = (offer: Offer) => {
+    setCounterTarget(offer);
+    setCounterPrice(String(offer.price));
+    setCounterMessage("");
+  };
+
+  const closeCounter = () => {
+    setCounterTarget(null);
+    setCounterSending(false);
+  };
+
+  const handleCounter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!counterTarget) return;
+    setCounterSending(true);
+    try {
+      const updated = await sendCounterOffer(counterTarget.id, {
+        price: Number(counterPrice.replace(/\s/g, "")) || counterTarget.price,
+        message: counterMessage,
+      });
+      if (updated) {
+        setOffers((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+      }
+      closeCounter();
+    } finally {
+      setCounterSending(false);
     }
   };
 
@@ -87,11 +132,14 @@ export default function SellerOffersPage() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {offers.map((offer) => {
-            const property = propertyFor(offer.propertyId);
+            const property = propertyById(offer.propertyId);
+            const buyer = userById(offer.buyerId);
             const asking = property?.price ?? 0;
-            const diffPct = asking > 0 ? Math.round(((offer.price - asking) / asking) * 100) : 0;
+            const diffPct =
+              asking > 0 ? Math.round(((offer.price - asking) / asking) * 100) : 0;
             const above = diffPct >= 0;
             const pending = offer.status === OfferStatus.PENDING;
+            const counter = offer.status === OfferStatus.COUNTER_OFFER;
             const busy = busyId === offer.id;
 
             return (
@@ -108,12 +156,14 @@ export default function SellerOffersPage() {
                       {property?.title ?? "Bien"}
                     </Link>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                      Reçue le {formatDate(offer.createdAt)} · Contact : {offer.preferredContact}
+                      Reçue le {formatDate(offer.createdAt)} · Contact :{" "}
+                      {offer.preferredContact}
                     </p>
                   </div>
-                  <Badge className={cn("shrink-0 border-transparent", statusBadgeClass[offer.status])}>
-                    {statusLabel[offer.status]}
-                  </Badge>
+                  <StatusBadge
+                    className={offerStatusBadge[offer.status]}
+                    label={offerStatusLabel[offer.status]}
+                  />
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3">
@@ -136,13 +186,44 @@ export default function SellerOffersPage() {
                   )}
                 >
                   {above ? <TrendingUp className="size-3.5" /> : <TrendingDown className="size-3.5" />}
-                  {above ? "+" : ""}{diffPct}% vs prix affiché
+                  {above ? "+" : ""}
+                  {diffPct}% vs prix affiché
                 </div>
+
+                {counter && offer.counterPrice !== undefined && (
+                  <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/30 dark:bg-blue-500/10">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">
+                      Votre contre-offre
+                    </p>
+                    <p className="mt-1 font-display text-xl font-semibold">
+                      {formatPrice(offer.counterPrice)}
+                    </p>
+                    {offer.counterMessage && (
+                      <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+                        {offer.counterMessage}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {offer.message && (
                   <p className="mt-4 rounded-xl bg-sand/60 p-4 text-sm leading-relaxed text-foreground/80">
                     {offer.message}
                   </p>
+                )}
+
+                {buyer && (
+                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="size-3.5" /> {buyer.name}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Phone className="size-3.5" /> {buyer.phone || "Non renseigné"}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Mail className="size-3.5" /> {buyer.email}
+                    </span>
+                  </div>
                 )}
 
                 {pending && (
@@ -170,8 +251,9 @@ export default function SellerOffersPage() {
                       variant="outline"
                       disabled={busy}
                       className="rounded-full text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10"
-                      onClick={() => handleStatus(offer, OfferStatus.COUNTER_OFFER)}
+                      onClick={() => openCounter(offer)}
                     >
+                      <MessageSquareReply className="size-4" />
                       Contre-offre
                     </Button>
                   </div>
@@ -181,6 +263,81 @@ export default function SellerOffersPage() {
           })}
         </div>
       )}
+
+      <Dialog open={counterTarget !== null} onOpenChange={(open) => !open && closeCounter()}>
+        <DialogContent className="max-w-xl">
+          {counterTarget && (
+            <form onSubmit={handleCounter}>
+              <DialogHeader>
+                <DialogTitle className="text-lg">Faire une contre-offre</DialogTitle>
+                <DialogDescription>
+                  Proposez un nouveau prix en réponse à l&apos;offre de l&apos;acheteur
+                  pour {propertyById(counterTarget.propertyId)?.title ?? "ce bien"}.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="mt-5 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-sand p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Offre reçue
+                    </p>
+                    <p className="mt-1 font-display text-lg font-semibold">
+                      {formatPrice(counterTarget.price)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-muted/60 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Prix affiché
+                    </p>
+                    <p className="mt-1 font-display text-lg font-semibold">
+                      {formatPrice(propertyById(counterTarget.propertyId)?.price ?? 0)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="counter-price">Votre contre-proposition</Label>
+                  <Input
+                    id="counter-price"
+                    required
+                    type="number"
+                    min={0}
+                    value={counterPrice}
+                    onChange={(e) => setCounterPrice(e.target.value)}
+                    className="text-base font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="counter-message">Message à l&apos;acheteur</Label>
+                  <Textarea
+                    id="counter-message"
+                    rows={3}
+                    placeholder="Expliquez le contexte de votre contre-proposition…"
+                    value={counterMessage}
+                    onChange={(e) => setCounterMessage(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <Button type="button" variant="ghost" onClick={closeCounter}>
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={counterSending}
+                  className="flex-1 rounded-full bg-blue-600 text-white hover:bg-blue-600/90"
+                >
+                  {counterSending && <Loader2 className="mr-2 size-4 animate-spin" />}
+                  Envoyer la contre-offre
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

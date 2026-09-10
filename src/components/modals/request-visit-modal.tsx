@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Loader2, CheckCircle2, Users } from "lucide-react";
 import type { Property } from "@/types";
+import { LeadStatus } from "@/types";
+import { createLead, createVisit } from "@/services/leadService";
+import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,21 +33,43 @@ export function RequestVisitModal({
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { user } = useAuth();
   const [form, setForm] = useState({
     date: "",
     time: "10:00",
     visitors: "2",
-    phone: "",
+    phone: user?.phone ?? "",
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setTimeout(() => {
+    try {
+      const lead = await createLead({
+        propertyId: property.id,
+        buyerId: user?.id ?? "buyer-1",
+        sellerId: property.sellerId,
+        status: LeadStatus.VISIT_REQUESTED,
+        message: form.message,
+        name: user?.name ?? "Acheteur",
+        phone: form.phone,
+        email: user?.email ?? "",
+      });
+      await createVisit({
+        propertyId: property.id,
+        leadId: lead.id,
+        date: form.date,
+        time: form.time,
+        numberOfVisitors: Math.max(1, Number(form.visitors) || 1),
+        phone: form.phone,
+        message: form.message,
+        status: LeadStatus.VISIT_REQUESTED,
+      });
+    } finally {
       setSubmitting(false);
       setSubmitted(true);
-    }, 800);
+    }
   };
 
   const today = new Date().toISOString().split("T")[0];
@@ -100,6 +125,7 @@ export function RequestVisitModal({
                       <button
                         key={slot}
                         type="button"
+                        aria-pressed={form.time === slot}
                         onClick={() => setForm({ ...form, time: slot })}
                         className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                           form.time === slot

@@ -17,11 +17,12 @@ import { mockProperties } from "@/data/properties";
 import { DashboardHeader, StatCard } from "@/components/dashboard/dashboard-shell";
 import { PropertyCard } from "@/components/property/property-card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-
-const SELLER_ID = "seller-1";
+import { useAuth } from "@/components/providers/auth-provider";
+import { useCurrentSellerId } from "@/hooks/useCurrentSeller";
 
 const leadStatusLabel: Record<string, string> = {
   NEW: "Nouveau",
@@ -48,6 +49,8 @@ const leadStatusBadge: Record<string, string> = {
 const weeklyViews = [42, 58, 34, 61, 79, 52, 88, 67, 96, 73, 112, 84, 105];
 
 export default function SellerOverviewPage() {
+  const { user } = useAuth();
+  const sellerId = useCurrentSellerId();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -59,26 +62,42 @@ export default function SellerOverviewPage() {
 
   useEffect(() => {
     getProperties()
-      .then((all) => setProperties(all.filter((p) => p.sellerId === SELLER_ID)))
+      .then((all) => setProperties(all.filter((p) => p.sellerId === sellerId)))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [sellerId]);
 
   useEffect(() => {
-    Promise.all([getLeads(), getVisits(), getOffers()])
-      .then(([l, v, o]) => {
-        setLeads(l.filter((lead) => lead.sellerId === SELLER_ID));
-        setStats({ visits: v.length, offers: o.length });
+    Promise.all([getProperties(), getLeads(), getVisits(), getOffers()])
+      .then(([all, l, v, o]) => {
+        const myProps = all.filter((p) => p.sellerId === sellerId);
+        const myLeads = l.filter((lead) => lead.sellerId === sellerId);
+        const myLeadIds = new Set(myLeads.map((lead) => lead.id));
+        const myPropIds = new Set(myProps.map((p) => p.id));
+        setLeads(myLeads);
+        setStats({
+          visits: v.filter((visit) => myLeadIds.has(visit.leadId)).length,
+          offers: o.filter((offer) => myPropIds.has(offer.propertyId)).length,
+        });
       })
       .catch(() => {})
       .finally(() => setActivityLoading(false));
-  }, []);
+  }, [sellerId]);
 
   const published = properties.filter(
     (p) => p.status === "PUBLISHED" || p.status === "PAUSED"
   ).length;
   const totalViews = properties.reduce((sum, p) => sum + p.views, 0);
   const soldCount = properties.filter((p) => p.status === "SOLD").length;
+
+  const viewsTrend = (() => {
+    if (loading || published === 0 || weeklyViews.length < 2) return undefined;
+    const first = weeklyViews[0];
+    const last = weeklyViews[weeklyViews.length - 1];
+    if (first === 0) return undefined;
+    const delta = Math.round(((last - first) / first) * 100);
+    return `${delta > 0 ? "+" : ""}${delta}% vs la première semaine`;
+  })();
 
   const propertyTitle = useCallback(
     (propertyId: string) =>
@@ -106,56 +125,74 @@ export default function SellerOverviewPage() {
     <div>
       <DashboardHeader
         title="Espace vendeur"
-        subtitle="Mohamed Benali, suivez la performance de vos annonces."
+        subtitle={user?.name ? `${user.name}, suivez la performance de vos annonces.` : "Suivez la performance de vos annonces."}
       />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
         <StatCard icon={Building2} label="Annonces actives" value={loading ? "…" : published} hint={soldCount > 0 ? `${soldCount} bien${soldCount > 1 ? "s" : ""} vendu${soldCount > 1 ? "s" : ""}` : undefined} />
-        <StatCard icon={Eye} label="Vues totales" value={loading ? "…" : totalViews} hint="+12% vs semaine dernière" />
+        <StatCard icon={Eye} label="Vues totales" value={loading ? "…" : totalViews} hint={viewsTrend} />
         <StatCard icon={Inbox} label="Leads" value={activityLoading ? "…" : leads.length} />
         <StatCard icon={CalendarCheck2} label="Visites" value={activityLoading ? "…" : stats.visits} />
         <StatCard icon={FileCheck} label="Offres" value={activityLoading ? "…" : stats.offers} accent />
       </div>
 
       {/* Performance */}
-      <div className="mt-10 rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-display text-lg font-semibold">Performance</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Vues sur vos annonces, 13 dernières semaines
-            </p>
+      {!loading && properties.length === 0 ? (
+        <div className="mt-10 rounded-2xl border border-dashed border-border/60 bg-card p-8 text-center">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-sand text-gold">
+            <Eye className="size-6" />
+          </div>
+          <h2 className="mt-4 font-display text-lg font-semibold">Performance</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Publiez votre premier bien pour suivre ici les vues, visites et
+            demandes reçues.
+          </p>
+          <Link href="/seller/add" className="mt-5 inline-block">
+            <Button className="rounded-full bg-gold text-white hover:bg-gold/90">
+              <Building2 className="size-4" /> Ajouter mon premier bien
+            </Button>
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-10 rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-display text-lg font-semibold">Performance</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Vues sur vos annonces, 13 dernières semaines
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 flex h-40 items-end gap-1.5 sm:gap-2">
+            {weeklyViews.map((value, i) => (
+              <div key={i} className="group flex flex-1 flex-col items-center gap-2">
+                <div className="relative flex w-full flex-1 items-end">
+                  <div
+                    className={cn(
+                      "w-full rounded-t-lg transition-all duration-300 group-hover:brightness-110",
+                      i === weeklyViews.length - 1
+                        ? "bg-gold shadow-lg shadow-gold/20"
+                        : "bg-gold/35 group-hover:bg-gold/55"
+                    )}
+                    style={{ height: `${(value / maxViews) * 100}%` }}
+                  />
+                  <span className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-1.5 py-0.5 text-[10px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    {value}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 flex gap-1.5 sm:gap-2">
+            {weeklyViews.map((_, i) => (
+              <span key={i} className="flex-1 text-center text-[10px] text-muted-foreground">
+                S{46 + i}
+              </span>
+            ))}
           </div>
         </div>
-        <div className="mt-6 flex h-40 items-end gap-1.5 sm:gap-2">
-          {weeklyViews.map((value, i) => (
-            <div key={i} className="group flex flex-1 flex-col items-center gap-2">
-              <div className="relative flex w-full flex-1 items-end">
-                <div
-                  className={cn(
-                    "w-full rounded-t-lg transition-all duration-300 group-hover:brightness-110",
-                    i === weeklyViews.length - 1
-                      ? "bg-gold shadow-lg shadow-gold/20"
-                      : "bg-gold/35 group-hover:bg-gold/55"
-                  )}
-                  style={{ height: `${(value / maxViews) * 100}%` }}
-                />
-                <span className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-1.5 py-0.5 text-[10px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
-                  {value}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-2 flex gap-1.5 sm:gap-2">
-          {weeklyViews.map((_, i) => (
-            <span key={i} className="flex-1 text-center text-[10px] text-muted-foreground">
-              S{46 + i}
-            </span>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Recent leads */}
       <div className="mt-10">

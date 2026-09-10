@@ -4,44 +4,30 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeftRight, UserRound } from "lucide-react";
 import type { Transaction } from "@/types";
-import { TransactionStatus } from "@/types";
 import { getTransactions } from "@/services/transactionService";
-import { mockProperties, mockUsers } from "@/data/properties";
+import {
+  propertyById,
+  userById,
+  transactionStatusLabel,
+  transactionStatusBadge,
+} from "@/lib/labels";
 import { DashboardHeader } from "@/components/dashboard/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatPrice, formatDate, cn } from "@/lib/utils";
-
-const statusLabel: Record<TransactionStatus, string> = {
-  [TransactionStatus.PENDING]: "En attente",
-  [TransactionStatus.COMPLETED]: "Finalisée",
-  [TransactionStatus.CANCELLED]: "Annulée",
-};
-
-const statusBadgeClass: Record<TransactionStatus, string> = {
-  [TransactionStatus.PENDING]: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  [TransactionStatus.COMPLETED]: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  [TransactionStatus.CANCELLED]: "bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300",
-};
-
-function propertyFor(propertyId: string) {
-  return mockProperties.find((p) => p.id === propertyId);
-}
-
-function buyerFor(buyerId: string) {
-  return mockUsers.find((u) => u.id === buyerId);
-}
+import { formatPrice, formatDate } from "@/lib/utils";
+import { useCurrentSellerId } from "@/hooks/useCurrentSeller";
 
 export default function SellerTransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const sellerId = useCurrentSellerId();
 
   useEffect(() => {
     getTransactions()
-      .then(setTransactions)
+      .then((all) => setTransactions(all.filter((t) => t.sellerId === sellerId)))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [sellerId]);
 
   const sorted = [...transactions].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -72,8 +58,8 @@ export default function SellerTransactionsPage() {
       ) : (
         <div className="space-y-4">
           {sorted.map((txn) => {
-            const property = propertyFor(txn.propertyId);
-            const buyer = buyerFor(txn.buyerId);
+            const property = propertyById(txn.propertyId);
+            const buyer = userById(txn.buyerId);
             return (
               <div
                 key={txn.id}
@@ -88,9 +74,10 @@ export default function SellerTransactionsPage() {
                       >
                         {property?.title ?? "Bien"}
                       </Link>
-                      <Badge className={cn("shrink-0 border-transparent", statusBadgeClass[txn.status])}>
-                        {statusLabel[txn.status]}
-                      </Badge>
+                      <StatusBadge
+                        className={transactionStatusBadge[txn.status]}
+                        label={transactionStatusLabel[txn.status]}
+                      />
                     </div>
                     <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted-foreground">
                       <UserRound className="size-4" />

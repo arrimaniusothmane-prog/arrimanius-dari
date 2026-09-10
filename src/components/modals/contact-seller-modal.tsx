@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import type { Property } from "@/types";
+import { LeadStatus } from "@/types";
+import { createLead, createVisit } from "@/services/leadService";
+import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,21 +29,47 @@ export function ContactSellerModal({
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { user } = useAuth();
   const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    email: "",
+    name: user?.name ?? "",
+    phone: user?.phone ?? "",
+    email: user?.email ?? "",
     message: "",
     requestVisit: false,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setTimeout(() => {
+    try {
+      const lead = await createLead({
+        propertyId: property.id,
+        buyerId: user?.id ?? "buyer-1",
+        sellerId: property.sellerId,
+        status: form.requestVisit
+          ? LeadStatus.VISIT_REQUESTED
+          : LeadStatus.NEW,
+        message: form.message,
+        name: form.name,
+        phone: form.phone,
+        email: form.email,
+      });
+      if (form.requestVisit) {
+        await createVisit({
+          propertyId: property.id,
+          leadId: lead.id,
+          date: new Date().toISOString().split("T")[0],
+          time: "10:00",
+          numberOfVisitors: 1,
+          phone: form.phone,
+          message: form.message,
+          status: LeadStatus.VISIT_REQUESTED,
+        });
+      }
+    } finally {
       setSubmitting(false);
       setSubmitted(true);
-    }, 800);
+    }
   };
 
   return (

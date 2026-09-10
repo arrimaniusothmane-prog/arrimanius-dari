@@ -4,39 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Inbox, Phone } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLeads } from "@/services/leadService";
-import { mockProperties } from "@/data/properties";
+import {
+  propertyById,
+  leadStatusLabel,
+  leadStatusBadge,
+} from "@/lib/labels";
 import { LeadStatus } from "@/types";
 import type { Lead } from "@/types";
-import { formatDate, cn } from "@/lib/utils";
-
-const statusLabel: Record<LeadStatus, string> = {
-  [LeadStatus.NEW]: "Nouveau",
-  [LeadStatus.CONTACTED]: "Contacté",
-  [LeadStatus.VISIT_REQUESTED]: "Visite demandée",
-  [LeadStatus.VISIT_COMPLETED]: "Visite effectuée",
-  [LeadStatus.OFFER_MADE]: "Offre faite",
-  [LeadStatus.NEGOTIATION]: "Négociation",
-  [LeadStatus.SOLD]: "Vendu",
-  [LeadStatus.CANCELLED]: "Annulé",
-};
-
-const statusBadge: Record<LeadStatus, string> = {
-  [LeadStatus.NEW]: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
-  [LeadStatus.CONTACTED]: "bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300",
-  [LeadStatus.VISIT_REQUESTED]: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  [LeadStatus.VISIT_COMPLETED]: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  [LeadStatus.OFFER_MADE]: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
-  [LeadStatus.NEGOTIATION]: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
-  [LeadStatus.SOLD]: "bg-gold/20 text-gold",
-  [LeadStatus.CANCELLED]: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
-};
-
-function propertyFor(propertyId: string) {
-  return mockProperties.find((p) => p.id === propertyId);
-}
+import { formatDate } from "@/lib/utils";
 
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -102,7 +80,7 @@ export default function AdminLeadsPage() {
       ) : (
         <div className="space-y-3">
           {sorted.map((lead) => {
-            const property = propertyFor(lead.propertyId);
+            const property = propertyById(lead.propertyId);
             return (
               <div
                 key={lead.id}
@@ -130,9 +108,10 @@ export default function AdminLeadsPage() {
                 </div>
                 <div className="flex shrink-0 items-center gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1.5"><Phone className="size-3.5" /> {lead.phone}</span>
-                  <Badge className={cn("shrink-0 border-transparent", statusBadge[lead.status])}>
-                    {statusLabel[lead.status]}
-                  </Badge>
+                  <StatusBadge
+                    className={leadStatusBadge[lead.status]}
+                    label={leadStatusLabel[lead.status]}
+                  />
                 </div>
               </div>
             );

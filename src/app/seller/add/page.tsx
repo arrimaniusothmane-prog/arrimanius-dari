@@ -14,12 +14,17 @@ import {
   Map,
   Store,
   ImagePlus,
+  UploadCloud,
+  X,
   Sparkles,
   BadgeCheck,
+  Star,
 } from "lucide-react";
 import type { Property } from "@/types";
 import { PropertyCategory, PropertyStatus } from "@/types";
 import { addProperty } from "@/services/propertyService";
+import { categoryLabel } from "@/lib/labels";
+import { useCurrentSellerId } from "@/hooks/useCurrentSeller";
 import { DashboardHeader } from "@/components/dashboard/dashboard-shell";
 import { PropertyCard } from "@/components/property/property-card";
 import { Button } from "@/components/ui/button";
@@ -36,8 +41,6 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { formatPrice, cn } from "@/lib/utils";
-
-const SELLER_ID = "seller-1";
 
 const CITIES = ["Casablanca", "Marrakech", "Rabat", "Tangier", "Fez", "Agadir"];
 
@@ -56,11 +59,11 @@ const CATEGORY_OPTIONS: {
   icon: typeof Building2;
   description: string;
 }[] = [
-  { value: PropertyCategory.APARTMENT, label: "Appartement", icon: Building2, description: "Appartement en immeuble, résidence ou en copropriété." },
-  { value: PropertyCategory.VILLA, label: "Villa", icon: TreePine, description: "Villa individuelle avec jardin, piscine ou plain-pied." },
-  { value: PropertyCategory.HOUSE, label: "Maison", icon: Home, description: "Maison de ville ou familiale." },
-  { value: PropertyCategory.LAND, label: "Terrain", icon: Map, description: "Terrain constructible, résidentiel ou agricole." },
-  { value: PropertyCategory.COMMERCIAL, label: "Local commercial", icon: Store, description: "Boutique, bureau, restaurant ou local d'activité." },
+  { value: PropertyCategory.APARTMENT, label: categoryLabel[PropertyCategory.APARTMENT], icon: Building2, description: "Appartement en immeuble, résidence ou en copropriété." },
+  { value: PropertyCategory.VILLA, label: categoryLabel[PropertyCategory.VILLA], icon: TreePine, description: "Villa individuelle avec jardin, piscine ou plain-pied." },
+  { value: PropertyCategory.HOUSE, label: categoryLabel[PropertyCategory.HOUSE], icon: Home, description: "Maison de ville ou familiale." },
+  { value: PropertyCategory.LAND, label: categoryLabel[PropertyCategory.LAND], icon: Map, description: "Terrain constructible, résidentiel ou agricole." },
+  { value: PropertyCategory.COMMERCIAL, label: categoryLabel[PropertyCategory.COMMERCIAL], icon: Store, description: "Boutique, bureau, restaurant ou local d'activité." },
 ];
 
 const AMENITIES = [
@@ -140,6 +143,11 @@ export default function SellerAddPropertyPage() {
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
   const [maxPhotoHint, setMaxPhotoHint] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const sellerId = useCurrentSellerId();
+
+  const isUploadedUrl = (url: string) => url.startsWith("/api/uploads/");
 
   const updateDraft = (patch: Partial<Draft>) =>
     setDraft((prev) => ({ ...prev, ...patch }));
@@ -226,11 +234,11 @@ export default function SellerAddPropertyPage() {
       isNewConstruction: draft.isNewConstruction,
       views: 0,
       favoriteCount: 0,
-      sellerId: SELLER_ID,
+      sellerId,
       createdAt: "",
       updatedAt: "",
     }),
-    [draft]
+    [draft, sellerId]
   );
 
   const toggleImage = (url: string) => {
@@ -244,6 +252,54 @@ export default function SellerAddPropertyPage() {
       setMaxPhotoHint(false);
       updateDraft({ images: [...selected, url] });
     }
+  };
+
+  const removeImage = (url: string) => {
+    setMaxPhotoHint(false);
+    updateDraft({ images: draft.images.filter((u) => u !== url) });
+  };
+
+  const makePrimary = (url: string) => {
+    updateDraft({ images: [url, ...draft.images.filter((u) => u !== url)] });
+  };
+
+  const uploadPhotos = async (files: File[]) => {
+    const pics = files.filter((f) => f.type.startsWith("image/"));
+    if (pics.length === 0) {
+      setUploadError("Formats d'image non pris en charge (JPG, PNG, WebP, GIF).");
+      return;
+    }
+    const slots = 5 - draft.images.length;
+    if (slots <= 0) {
+      setMaxPhotoHint(true);
+      return;
+    }
+    const batch = pics.slice(0, slots);
+    if (pics.length > slots) setMaxPhotoHint(true);
+
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const form = new FormData();
+      batch.forEach((f) => form.append("files", f));
+      const res = await fetch("/api/uploads", { method: "POST", body: form });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.urls?.length) {
+        setUploadError(data?.error ?? "L'envoi des photos a échoué, réessayez.");
+        return;
+      }
+      updateDraft({ images: [...draft.images, ...(data.urls as string[])] });
+    } catch {
+      setUploadError("Impossible d'envoyer les photos. Vérifiez votre connexion.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    uploadPhotos(files);
   };
 
   const handlePublish = async () => {
@@ -298,7 +354,7 @@ export default function SellerAddPropertyPage() {
         isNewConstruction: draft.isNewConstruction,
         views: 0,
         favoriteCount: 0,
-        sellerId: SELLER_ID,
+        sellerId,
       };
 
       await addProperty(propertyData);
@@ -599,6 +655,115 @@ export default function SellerAddPropertyPage() {
                 <Badge className="border-transparent bg-gold text-white">Photo principale</Badge>
               )}
             </div>
+
+            {/* Import from device */}
+            <div className="rounded-2xl border-2 border-dashed border-gold/40 bg-sand/20 p-6">
+              <label
+                htmlFor="add-photo-upload"
+                className="group flex cursor-pointer flex-col items-center gap-3 text-center"
+              >
+                <div className="flex size-12 items-center justify-center rounded-full bg-gold text-white shadow-md shadow-gold/20 transition-transform group-hover:scale-105">
+                  <UploadCloud className="size-6" />
+                </div>
+                <div>
+                  <p className="font-display text-base font-semibold">
+                    Importer mes photos
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    JPG, PNG, WebP ou GIF · 5 Mo max · jusqu&apos;à 5 photos
+                  </p>
+                </div>
+                <span className="mt-1 text-sm font-medium text-gold">
+                  {uploading ? "Envoi en cours…" : "Parcourir mes fichiers"}
+                </span>
+              </label>
+              <input
+                id="add-photo-upload"
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                disabled={uploading}
+                onChange={onFilesSelected}
+              />
+              {uploading && (
+                <p className="mt-3 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin text-gold" />
+                  Envoi des photos…
+                </p>
+              )}
+              {uploadError && (
+                <p className="mt-3 text-center text-sm font-medium text-red-600 dark:text-red-400" role="alert">
+                  {uploadError}
+                </p>
+              )}
+            </div>
+
+            {/* Uploaded photos */}
+            {draft.images.some(isUploadedUrl) && (
+              <div className="mt-6">
+                <h3 className="mb-2 text-sm font-semibold text-foreground">
+                  Mes photos
+                </h3>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {draft.images.filter(isUploadedUrl).map((url) => {
+                    const isPrimary = draft.images[0] === url;
+                    return (
+                      <div
+                        key={url}
+                        className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-border/60"
+                      >
+                        <Image
+                          src={url}
+                          alt="Votre photo"
+                          fill
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                          className="object-cover"
+                        />
+                        {isPrimary && (
+                          <span className="absolute bottom-2 left-2 rounded-full bg-gold px-2 py-0.5 text-[10px] font-semibold text-white shadow-md">
+                            Photo principale
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(url)}
+                          aria-label="Retirer cette photo"
+                          className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-colors hover:bg-red-500"
+                        >
+                          <X className="size-4" />
+                        </button>
+                        {!isPrimary && (
+                          <button
+                            type="button"
+                            onClick={() => makePrimary(url)}
+                            aria-label="Définir comme photo principale"
+                            className="absolute bottom-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-colors hover:bg-gold"
+                          >
+                            <Star className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {draft.images.some(isUploadedUrl) && (
+              <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="h-px flex-1 bg-border/60" />
+                Ou choisissez parmi nos modèles
+                <span className="h-px flex-1 bg-border/60" />
+              </div>
+            )}
+
+            {!draft.images.some(isUploadedUrl) && (
+              <p className="mt-6 text-sm font-semibold text-foreground">
+                Ou choisissez parmi nos modèles
+              </p>
+            )}
+
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {PHOTO_OPTIONS.map((photo) => {
                 const selected = draft.images.includes(photo.url);
@@ -644,8 +809,9 @@ export default function SellerAddPropertyPage() {
             )}
             {draft.images.length > 1 && (
               <p className="mt-3 text-xs text-muted-foreground">
-                La première photo sélectionnée sert de photo principale. Pour
-                changer l&apos;ordre, retirez puis re-sélectionnez les photos.
+                La première photo sélectionnée sert de photo principale. Utilisez
+                l&apos;icône Étoile sur vos photos importées pour modifier la photo
+                principale.
               </p>
             )}
           </div>

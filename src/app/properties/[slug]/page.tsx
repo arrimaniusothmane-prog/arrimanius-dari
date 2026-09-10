@@ -15,11 +15,26 @@ export async function generateMetadata({
   return {
     title: `${property.title} — ${property.address.city}`,
     description: property.description.slice(0, 160),
+    alternates: {
+      canonical: `/properties/${property.slug}`,
+      languages: {
+        fr: `/properties/${property.slug}`,
+        en: `/properties/${property.slug}`,
+        ar: `/properties/${property.slug}`,
+      },
+    },
     openGraph: {
       title: `${property.title} · ${property.address.city}`,
       description: property.description.slice(0, 160),
       type: "website",
+      url: `https://www.darestimate.ma/properties/${property.slug}`,
       images: primary ? [{ url: primary.url }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${property.title} · ${property.address.city}`,
+      description: property.description.slice(0, 160),
+      images: primary ? [primary.url] : undefined,
     },
   };
 }

@@ -32,8 +32,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { formatPrice, cn } from "@/lib/utils";
-
-const SELLER_ID = "seller-1";
+import { useCurrentSellerId } from "@/hooks/useCurrentSeller";
 
 type FilterKey = "all" | "recent" | PropertyStatus;
 
@@ -162,6 +161,7 @@ function RowActions({
 }
 
 export default function SellerPropertiesPage() {
+  const sellerId = useCurrentSellerId();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -170,10 +170,10 @@ export default function SellerPropertiesPage() {
 
   useEffect(() => {
     getProperties()
-      .then((all) => setProperties(all.filter((p) => p.sellerId === SELLER_ID)))
+      .then((all) => setProperties(all.filter((p) => p.sellerId === sellerId)))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [sellerId]);
 
   const notify = useCallback((type: "success" | "error", text: string) => {
     setFeedback({ type, text });

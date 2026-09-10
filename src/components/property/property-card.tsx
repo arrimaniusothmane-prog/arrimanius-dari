@@ -5,18 +5,10 @@ import Image from "next/image";
 import { useState } from "react";
 import { MapPin, Bath, BedDouble, Ruler, Heart, BadgeCheck } from "lucide-react";
 import type { Property } from "@/types";
-import { PropertyCategory } from "@/types";
 import { formatPrice, cn } from "@/lib/utils";
+import { categoryLabel } from "@/lib/labels";
 import { useFavorites } from "@/hooks/useProperties";
 import { Badge } from "@/components/ui/badge";
-
-const categoryLabels: Record<PropertyCategory, string> = {
-  [PropertyCategory.APARTMENT]: "Appartement",
-  [PropertyCategory.VILLA]: "Villa",
-  [PropertyCategory.HOUSE]: "Maison",
-  [PropertyCategory.LAND]: "Terrain",
-  [PropertyCategory.COMMERCIAL]: "Commercial",
-};
 
 export function PropertyCard({
   property,
@@ -38,42 +30,44 @@ export function PropertyCard({
   };
 
   return (
-    <Link
-      href={`/properties/${property.slug}`}
+    <div
       className={cn(
-        "group block overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5",
+        "group relative block overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5",
         className
       )}
     >
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-        {primaryImage && !imageError ? (
-          <Image
-            src={primaryImage.url}
-            alt={primaryImage.alt || property.title}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <span className="text-4xl font-display text-muted-foreground/40">{categoryLabels[property.category]}</span>
-          </div>
-        )}
+        <Link href={`/properties/${property.slug}`} aria-label={property.title} className="absolute inset-0">
+          {primaryImage && !imageError ? (
+            <Image
+              src={primaryImage.url}
+              alt={primaryImage.alt || property.title}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+              <span className="text-4xl font-display text-muted-foreground/40">{categoryLabel[property.category]}</span>
+            </div>
+          )}
+        </Link>
 
         {/* Category badge */}
-        <Badge className="absolute left-3 top-3 bg-black/40 text-white backdrop-blur-md hover:bg-black/50">
-          {categoryLabels[property.category]}
+        <Badge className="pointer-events-none absolute left-3 top-3 bg-black/40 text-white backdrop-blur-md hover:bg-black/50">
+          {categoryLabel[property.category]}
         </Badge>
 
         {/* Favorite */}
         <button
           onClick={onToggleFavorite}
           aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+          aria-pressed={isFavorite}
           className={cn(
-            "absolute right-3 top-3 flex size-9 items-center justify-center rounded-full backdrop-blur-md transition-all active:scale-90",
+            "absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full backdrop-blur-md transition-all active:scale-90",
             isFavorite
               ? "bg-gold text-white"
               : "bg-black/30 text-white hover:bg-black/50"
@@ -84,7 +78,7 @@ export function PropertyCard({
 
         {/* Verified */}
         {property.isVerified && (
-          <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-gold px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm backdrop-blur-md">
+          <div className="pointer-events-none absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-gold px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm backdrop-blur-md">
             <BadgeCheck className="size-3.5" />
             Vérifié
           </div>
@@ -96,7 +90,9 @@ export function PropertyCard({
         <div className="flex items-start justify-between gap-2">
           <div>
             <h3 className="text-[15px] font-semibold leading-snug text-foreground">
-              {property.title}
+              <Link href={`/properties/${property.slug}`} className="hover:text-gold">
+                {property.title}
+              </Link>
             </h3>
             <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="size-3.5" />
@@ -129,6 +125,6 @@ export function PropertyCard({
           )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

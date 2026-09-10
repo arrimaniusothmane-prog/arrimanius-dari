@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Loader2, MailCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Copy, Loader2, MailCheck } from "lucide-react";
 import { sendPasswordReset } from "@/services/authService";
+import type { ResetResult } from "@/services/authService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,17 +12,31 @@ import { Alert } from "@/components/ui/alert";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [result, setResult] = useState<ResetResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setResult(null);
+    setCopied(false);
     setLoading(true);
-    await sendPasswordReset(email);
+    const res = await sendPasswordReset(email);
     setLoading(false);
-    setSent(true);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    setResult(res);
+  };
+
+  const copyPassword = async () => {
+    if (!result || !result.ok) return;
+    await navigator.clipboard.writeText(result.password);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -34,21 +49,40 @@ export default function ForgotPasswordPage() {
       </Link>
 
       <div className="mt-6 rounded-3xl border border-border/60 bg-card p-8 shadow-sm">
-        {sent ? (
-          <div className="flex flex-col items-center py-6 text-center">
+        {result && result.ok ? (
+          <div className="flex flex-col items-center py-2 text-center">
             <span className="flex size-16 items-center justify-center rounded-full bg-green-500/10">
               <CheckCircle2 className="size-8 text-green-500" />
             </span>
             <h1 className="mt-5 font-display text-2xl font-semibold">
-              Email envoyé
+              Compte retrouvé
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Si un compte existe pour{" "}
-              <span className="font-medium text-foreground">{email}</span>,
-              vous recevrez un lien de réinitialisation dans quelques instants.
+              {result.name} —{" "}
+              <span className="font-medium text-foreground">{result.email}</span>
             </p>
+            <div className="mt-5 w-full rounded-xl border border-border bg-muted/40 p-4">
+              <p className="text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Mot de passe (mode démo — pas d&apos;envoi d&apos;email)
+              </p>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <code className="truncate rounded-lg bg-background px-3 py-2 font-mono text-lg font-semibold">
+                  {result.password}
+                </code>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={copyPassword}
+                  className="shrink-0 rounded-full"
+                >
+                  <Copy className="mr-1.5 size-4" />
+                  {copied ? "Copié" : "Copier"}
+                </Button>
+              </div>
+            </div>
             <Link href="/login" className="mt-6 w-full">
-              <Button className="w-full rounded-full">Retour à la connexion</Button>
+              <Button className="w-full rounded-full">Aller à la connexion</Button>
             </Link>
           </div>
         ) : (
@@ -60,8 +94,8 @@ export default function ForgotPasswordPage() {
               Mot de passe oublié
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Entrez l&apos;adresse email associée à votre compte. Nous vous
-              enverrons un lien pour réinitialiser votre mot de passe.
+              Entrez l&apos;adresse email associée à votre compte pour
+              retrouver vos informations de connexion.
             </p>
 
             {error && (
@@ -89,7 +123,7 @@ export default function ForgotPasswordPage() {
                 disabled={loading}
               >
                 {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
-                Envoyer le lien
+                Retrouver mon compte
               </Button>
             </form>
           </>

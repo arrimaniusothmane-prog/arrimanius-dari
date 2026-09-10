@@ -4,35 +4,19 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FileCheck, HandCoins, X, Loader2 } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getOffers, updateOfferStatus } from "@/services/leadService";
-import { mockProperties, mockUsers } from "@/data/properties";
+import {
+  propertyById,
+  userById,
+  offerStatusLabel,
+  offerStatusBadge,
+} from "@/lib/labels";
 import { OfferStatus } from "@/types";
 import type { Offer } from "@/types";
-import { formatPrice, formatDate, cn } from "@/lib/utils";
-
-const statusLabel: Record<OfferStatus, string> = {
-  [OfferStatus.PENDING]: "En attente",
-  [OfferStatus.ACCEPTED]: "Acceptée",
-  [OfferStatus.REJECTED]: "Refusée",
-  [OfferStatus.COUNTER_OFFER]: "Contre-offre",
-};
-
-const statusBadge: Record<OfferStatus, string> = {
-  [OfferStatus.PENDING]: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  [OfferStatus.ACCEPTED]: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  [OfferStatus.REJECTED]: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
-  [OfferStatus.COUNTER_OFFER]: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
-};
-
-function propertyFor(propertyId: string) {
-  return mockProperties.find((p) => p.id === propertyId);
-}
-function buyerFor(buyerId: string) {
-  return mockUsers.find((u) => u.id === buyerId);
-}
+import { formatPrice, formatDate } from "@/lib/utils";
 
 export default function AdminOffersPage() {
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -82,8 +66,8 @@ export default function AdminOffersPage() {
       ) : (
         <div className="space-y-4">
           {sorted.map((offer) => {
-            const property = propertyFor(offer.propertyId);
-            const buyer = buyerFor(offer.buyerId);
+            const property = propertyById(offer.propertyId);
+            const buyer = userById(offer.buyerId);
             const pending = offer.status === OfferStatus.PENDING;
             const busy = busyId === offer.id;
             return (
@@ -97,9 +81,10 @@ export default function AdminOffersPage() {
                       >
                         {property?.title ?? "Bien"}
                       </Link>
-                      <Badge className={cn("shrink-0 border-transparent", statusBadge[offer.status])}>
-                        {statusLabel[offer.status]}
-                      </Badge>
+                      <StatusBadge
+                        className={offerStatusBadge[offer.status]}
+                        label={offerStatusLabel[offer.status]}
+                      />
                     </div>
                     <p className="mt-1.5 text-sm text-muted-foreground">
                       Acheteur : {buyer?.name ?? offer.buyerId} · Reçue le {formatDate(offer.createdAt)}

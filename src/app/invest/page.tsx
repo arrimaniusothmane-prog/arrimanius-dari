@@ -17,6 +17,10 @@ export const metadata = {
   title: "Investir dans l'immobilier au Maroc",
   description:
     "Découvrez les opportunités d'investissement immobilier au Maroc avec DarEstate. Rendements locatifs attractifs, programmes neufs premium et accompagnement juridique complet.",
+  alternates: {
+    canonical: "/invest",
+    languages: { fr: "/invest", en: "/invest", ar: "/invest" },
+  },
 };
 
 const stats = [

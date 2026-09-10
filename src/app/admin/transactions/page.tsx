@@ -4,32 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeftRight, Wallet, HandCoins } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTransactions } from "@/services/transactionService";
-import { mockProperties, mockUsers } from "@/data/properties";
-import { TransactionStatus } from "@/types";
+import {
+  propertyById,
+  userById,
+  transactionStatusLabel,
+  transactionStatusBadge,
+} from "@/lib/labels";
 import type { Transaction } from "@/types";
-import { formatPrice, formatDate, cn } from "@/lib/utils";
-
-const statusLabel: Record<TransactionStatus, string> = {
-  [TransactionStatus.PENDING]: "En attente",
-  [TransactionStatus.COMPLETED]: "Finalisée",
-  [TransactionStatus.CANCELLED]: "Annulée",
-};
-
-const statusBadge: Record<TransactionStatus, string> = {
-  [TransactionStatus.PENDING]: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  [TransactionStatus.COMPLETED]: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  [TransactionStatus.CANCELLED]: "bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300",
-};
-
-function propertyFor(propertyId: string) {
-  return mockProperties.find((p) => p.id === propertyId);
-}
-function userFor(userId: string) {
-  return mockUsers.find((u) => u.id === userId);
-}
+import { formatPrice, formatDate } from "@/lib/utils";
 
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -110,9 +95,9 @@ export default function AdminTransactionsPage() {
               </thead>
               <tbody>
                 {sorted.map((txn) => {
-                  const property = propertyFor(txn.propertyId);
-                  const seller = userFor(txn.sellerId);
-                  const buyer = userFor(txn.buyerId);
+                  const property = propertyById(txn.propertyId);
+                  const seller = userById(txn.sellerId);
+                  const buyer = userById(txn.buyerId);
                   return (
                     <tr key={txn.id} className="border-b border-border/60 align-middle last:border-0 hover:bg-muted/40">
                       <td className="px-5 py-4">
@@ -130,9 +115,10 @@ export default function AdminTransactionsPage() {
                       <td className="px-5 py-4 whitespace-nowrap text-gold">{formatPrice(txn.commissionAmount)}</td>
                       <td className="px-5 py-4 whitespace-nowrap text-muted-foreground">{formatDate(txn.createdAt)}</td>
                       <td className="px-5 py-4">
-                        <Badge className={cn("shrink-0 border-transparent", statusBadge[txn.status])}>
-                          {statusLabel[txn.status]}
-                        </Badge>
+                        <StatusBadge
+                          className={transactionStatusBadge[txn.status]}
+                          label={transactionStatusLabel[txn.status]}
+                        />
                       </td>
                     </tr>
                   );

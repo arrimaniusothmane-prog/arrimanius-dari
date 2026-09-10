@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { Heart, Search } from "lucide-react";
-import { useProperties } from "@/hooks/useProperties";
+import { useProperties, useFavorites } from "@/hooks/useProperties";
 import { PropertyCategory } from "@/types";
 import { DashboardHeader } from "@/components/dashboard/dashboard-shell";
 import { PropertyCard } from "@/components/property/property-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCurrentBuyerId } from "@/hooks/useCurrentBuyer";
 
 const categoryTitles: Record<PropertyCategory, string> = {
   [PropertyCategory.APARTMENT]: "Appartements",
@@ -19,22 +20,28 @@ const categoryTitles: Record<PropertyCategory, string> = {
 
 export default function BuyerFavoritesPage() {
   const { properties, loading } = useProperties();
+  const buyerId = useCurrentBuyerId();
+  const { favorites, loading: favoritesLoading } = useFavorites(buyerId);
+
+  const favoriteProperties = properties.filter((p) =>
+    favorites.includes(p.id)
+  );
 
   const groups = Object.values(PropertyCategory)
     .map((category) => ({
       category,
       title: categoryTitles[category],
-      items: properties.filter((p) => p.category === category).slice(0, 3),
+      items: favoriteProperties.filter((p) => p.category === category),
     }))
     .filter((g) => g.items.length > 0);
 
-  const total = properties.length;
+  const total = favoriteProperties.length;
 
   return (
     <div>
       <DashboardHeader
         title="Mes favoris"
-        subtitle="Les biens qui vous intéressent."
+        subtitle="Les biens que vous avez enregistrés."
         action={
           <Link href="/properties">
             <Button variant="outline" className="rounded-full">
@@ -44,7 +51,7 @@ export default function BuyerFavoritesPage() {
         }
       />
 
-      {loading ? (
+      {loading || favoritesLoading ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-80 rounded-2xl" />

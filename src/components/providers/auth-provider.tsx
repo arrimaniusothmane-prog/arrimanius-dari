@@ -1,20 +1,19 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
-import type { User, UserRole } from "@/types";
+import type { User } from "@/types";
 import * as authService from "@/services/authService";
-import type { ProfileUpdates } from "@/services/authService";
+import type {
+  LoginResult,
+  ProfileUpdates,
+  RegisterInput,
+} from "@/services/authService";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<User | null>;
-  register: (
-    name: string,
-    email: string,
-    password: string,
-    role: UserRole
-  ) => Promise<User>;
+  login: (email: string, password: string) => Promise<LoginResult>;
+  register: (input: RegisterInput) => Promise<User>;
   updateProfile: (updates: ProfileUpdates) => Promise<User | null>;
   logout: () => Promise<void>;
 }
@@ -33,14 +32,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const u = await authService.login(email, password);
-    setUser(u);
-    return u;
+    const result = await authService.login(email, password);
+    if (result.ok) setUser(result.user);
+    return result;
   }, []);
 
   const register = useCallback(
-    async (name: string, email: string, password: string, role: UserRole) => {
-      const u = await authService.register(name, email, password, role);
+    async (input: RegisterInput) => {
+      const u = await authService.register(input);
       setUser(u);
       return u;
     },

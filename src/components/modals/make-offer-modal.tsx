@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import type { Property } from "@/types";
+import { LeadStatus, OfferStatus } from "@/types";
+import { createOffer, createLead } from "@/services/leadService";
+import { useAuth } from "@/components/providers/auth-provider";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +30,7 @@ export function MakeOfferModal({
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { user } = useAuth();
   const [form, setForm] = useState({
     price: String(property.price),
     message: "",
@@ -38,13 +42,32 @@ export function MakeOfferModal({
     ? Math.round(((property.price - price) / property.price) * 100)
     : 0;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setTimeout(() => {
+    try {
+      await createOffer({
+        propertyId: property.id,
+        buyerId: user?.id ?? "buyer-1",
+        price,
+        message: form.message,
+        preferredContact: form.contact,
+        status: OfferStatus.PENDING,
+      });
+      await createLead({
+        propertyId: property.id,
+        buyerId: user?.id ?? "buyer-1",
+        sellerId: property.sellerId,
+        status: LeadStatus.OFFER_MADE,
+        message: form.message || `Offre de ${price} MAD`,
+        name: user?.name ?? "Acheteur",
+        phone: user?.phone ?? "",
+        email: user?.email ?? "",
+      });
+    } finally {
       setSubmitting(false);
       setSubmitted(true);
-    }, 800);
+    }
   };
 
   return (
@@ -134,6 +157,7 @@ export function MakeOfferModal({
                     <button
                       key={opt.value}
                       type="button"
+                      aria-pressed={form.contact === opt.value}
                       onClick={() => setForm({ ...form, contact: opt.value })}
                       className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                         form.contact === opt.value

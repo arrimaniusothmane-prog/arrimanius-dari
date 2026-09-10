@@ -2,14 +2,20 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Building2, Sparkles, Inbox, CalendarCheck2, FileCheck, ArrowLeftRight, Wallet, HandCoins } from "lucide-react";
+import { LayoutDashboard, Building2, Sparkles, Inbox, CalendarCheck2, FileCheck, ArrowLeftRight, Wallet, HandCoins, Users, UserRound, ShieldCheck, ShieldAlert, BadgeCheck, Flag, ArrowRight } from "lucide-react";
 import { DashboardHeader, StatCard } from "@/components/dashboard/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getDashboardStats, getTransactions } from "@/services/transactionService";
-import { mockProperties, mockUsers } from "@/data/properties";
-import { TransactionStatus } from "@/types";
+import {
+  propertyById,
+  userById,
+  transactionStatusLabel,
+  transactionStatusBadge,
+} from "@/lib/labels";
 import type { DashboardStats, Transaction } from "@/types";
+import { publicUsers } from "@/data/properties";
+import { UserRole } from "@/types";
 import { formatPrice, formatDate, cn } from "@/lib/utils";
 
 const growthData = [12, 18, 15, 22, 19, 26, 31, 28, 34, 39, 44, 49];
@@ -27,26 +33,14 @@ const commissionData = [
   { label: "Juin", value: 90 },
 ];
 
-const txnStatusLabel: Record<TransactionStatus, string> = {
-  [TransactionStatus.PENDING]: "En attente",
-  [TransactionStatus.COMPLETED]: "Finalisée",
-  [TransactionStatus.CANCELLED]: "Annulée",
-};
-
-const txnStatusBadge: Record<TransactionStatus, string> = {
-  [TransactionStatus.PENDING]: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  [TransactionStatus.COMPLETED]: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  [TransactionStatus.CANCELLED]: "bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300",
-};
-
 function propertyTitle(id: string) {
-  return mockProperties.find((p) => p.id === id)?.title ?? "Bien";
+  return propertyById(id)?.title ?? "Bien";
 }
 function propertySlug(id: string) {
-  return mockProperties.find((p) => p.id === id)?.slug;
+  return propertyById(id)?.slug;
 }
 function userName(id: string) {
-  return mockUsers.find((u) => u.id === id)?.name ?? "—";
+  return userById(id)?.name ?? "—";
 }
 
 export default function AdminOverviewPage() {
@@ -93,6 +87,138 @@ export default function AdminOverviewPage() {
         <StatCard icon={Wallet} label="Revenu total" value={chartValue ?? formatPrice(stats?.totalRevenue ?? 0)} />
         <StatCard icon={HandCoins} label="Revenu commissions" value={chartValue ?? formatPrice(stats?.commissionRevenue ?? 0)} accent />
       </div>
+
+      {/* User management */}
+      <section className="mt-10 rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-display text-lg font-semibold">Gestion des vendeurs & acheteurs</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Gérez les comptes de votre marketplace de manière ciblée.
+            </p>
+          </div>
+          <Link href="/admin/users" className="flex items-center gap-1 text-sm font-medium text-gold hover:underline">
+            Gérer les utilisateurs <ArrowRight className="size-4" />
+          </Link>
+        </div>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-3">
+          {[
+            {
+              icon: UserRound,
+              role: UserRole.BUYER,
+              label: "Acheteurs",
+              desc: "Favoris, demandes, visites et offres d'achat.",
+              href: "/admin/users",
+              count: publicUsers.filter((u) => u.role === UserRole.BUYER).length,
+            },
+            {
+              icon: Building2,
+              role: UserRole.SELLER,
+              label: "Vendeurs",
+              desc: "Annonces, leads, offres reçues et transactions.",
+              href: "/admin/users",
+              count: publicUsers.filter((u) => u.role === UserRole.SELLER).length,
+            },
+            {
+              icon: ShieldCheck,
+              role: UserRole.AGENT,
+              label: "Agents",
+              desc: "Comptes professionnels et agences partenaires.",
+              href: "/admin/users",
+              count: publicUsers.filter((u) => u.role === UserRole.AGENT).length,
+            },
+          ].map((m) => {
+            const Icon = m.icon;
+            return (
+              <Link key={m.role} href={m.href} className="group">
+                <div className="flex h-full flex-col rounded-2xl border border-border/60 bg-sand/40 p-5 transition-colors group-hover:border-gold/40">
+                  <div className="flex items-center justify-between">
+                    <div className="flex size-11 items-center justify-center rounded-xl bg-gold/15 text-gold-strong transition-colors group-hover:bg-gold group-hover:text-ink">
+                      <Icon className="size-5" />
+                    </div>
+                    <span className="tnum font-display text-2xl font-semibold">{m.count}</span>
+                  </div>
+                  <p className="mt-4 font-display text-base font-semibold">{m.label}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{m.desc}</p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-gold">
+                    Gérer <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Security summary */}
+      <section className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500">
+                <ShieldCheck className="size-5" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-semibold">Sécurité</h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">État de la modération</p>
+              </div>
+            </div>
+            <Link href="/admin/security" className="flex items-center gap-1 text-sm font-medium text-gold hover:underline">
+              Ouvrir <ArrowRight className="size-4" />
+            </Link>
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+            <div className="rounded-xl bg-sand/50 p-3">
+              <BadgeCheck className="mx-auto size-5 text-gold-strong" />
+              <p className="tnum mt-2 font-display text-xl font-semibold">{publicUsers.filter((u) => u.isVerified).length}</p>
+              <p className="text-xs text-muted-foreground">Vérifiés</p>
+            </div>
+            <div className="rounded-xl bg-red-500/5 p-3">
+              <ShieldAlert className="mx-auto size-5 text-red-500" />
+              <p className="tnum mt-2 font-display text-xl font-semibold">0</p>
+              <p className="text-xs text-muted-foreground">Suspendus</p>
+            </div>
+            <div className="rounded-xl bg-orange-500/5 p-3">
+              <Flag className="mx-auto size-5 text-orange-500" />
+              <p className="tnum mt-2 font-display text-xl font-semibold">0</p>
+              <p className="text-xs text-muted-foreground">Signalements</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-sand text-gold-strong">
+              <Users className="size-5" />
+            </div>
+            <div>
+              <h3 className="font-display text-lg font-semibold">Répartition des comptes</h3>
+              <p className="mt-0.5 text-sm text-muted-foreground">Profil des utilisateurs inscrits</p>
+            </div>
+          </div>
+          <div className="mt-5 space-y-3">
+            {[
+              { label: "Acheteurs", value: publicUsers.filter((u) => u.role === UserRole.BUYER).length, color: "bg-blue-500" },
+              { label: "Vendeurs", value: publicUsers.filter((u) => u.role === UserRole.SELLER).length, color: "bg-emerald-500" },
+              { label: "Agents", value: publicUsers.filter((u) => u.role === UserRole.AGENT).length, color: "bg-violet-500" },
+              { label: "Administrateurs", value: publicUsers.filter((u) => u.role === UserRole.ADMIN).length, color: "bg-gold" },
+            ].map((row) => {
+              const total = Math.max(publicUsers.length, 1);
+              const pct = Math.round((row.value / total) * 100);
+              return (
+                <div key={row.label} className="flex items-center gap-3">
+                  <span className="w-28 shrink-0 text-sm text-muted-foreground">{row.label}</span>
+                  <div className="relative h-4 flex-1 overflow-hidden rounded-full bg-sand/60">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: row.color }} />
+                  </div>
+                  <span className="tnum w-8 shrink-0 text-right text-sm font-semibold">{row.value}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
       {/* Growth chart */}
       <section className="mt-10 rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
@@ -236,9 +362,9 @@ export default function AdminOverviewPage() {
                       <td className="py-3 pr-4 text-gold">{formatPrice(txn.commissionAmount)}</td>
                       <td className="py-3 pr-4 text-muted-foreground">{formatDate(txn.createdAt)}</td>
                       <td className="py-3">
-                        <Badge className={cn("shrink-0 border-transparent", txnStatusBadge[txn.status])}>
-                          {txnStatusLabel[txn.status]}
-                        </Badge>
+<Badge className={cn("shrink-0 border-transparent", transactionStatusBadge[txn.status])}>
+                        {transactionStatusLabel[txn.status]}
+                      </Badge>
                       </td>
                     </tr>
                   );

@@ -4,34 +4,24 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Wallet, HandCoins, Clock, Info, Check } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCommissions, getTransactions } from "@/services/transactionService";
-import { mockProperties } from "@/data/properties";
+import {
+  propertyById,
+  commissionStatusLabel,
+  commissionStatusBadge,
+} from "@/lib/labels";
 import { CommissionStatus } from "@/types";
 import type { Commission, Transaction } from "@/types";
-import { formatPrice, formatDate, cn } from "@/lib/utils";
-
-const statusLabel: Record<CommissionStatus, string> = {
-  [CommissionStatus.PENDING]: "En attente",
-  [CommissionStatus.DUE]: "À payer",
-  [CommissionStatus.PAID]: "Payée",
-  [CommissionStatus.CANCELLED]: "Annulée",
-};
-
-const statusBadge: Record<CommissionStatus, string> = {
-  [CommissionStatus.PENDING]: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  [CommissionStatus.DUE]: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
-  [CommissionStatus.PAID]: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  [CommissionStatus.CANCELLED]: "bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300",
-};
+import { formatPrice, formatDate } from "@/lib/utils";
 
 const exampleCommission = { salePrice: 1500000, percentage: 2, amount: 30000 };
 
 function propertyFor(transactionId: string, transactions: Transaction[]) {
   const txn = transactions.find((t) => t.id === transactionId);
-  return txn ? mockProperties.find((p) => p.id === txn.propertyId) : undefined;
+  return txn ? propertyById(txn.propertyId) : undefined;
 }
 
 export default function AdminCommissionsPage() {
@@ -173,9 +163,10 @@ export default function AdminCommissionsPage() {
                         {c.paidDate ? formatDate(c.paidDate) : "—"}
                       </td>
                       <td className="px-5 py-4">
-                        <Badge className={cn("shrink-0 border-transparent", statusBadge[c.status])}>
-                          {statusLabel[c.status]}
-                        </Badge>
+                        <StatusBadge
+                          className={commissionStatusBadge[c.status]}
+                          label={commissionStatusLabel[c.status]}
+                        />
                       </td>
                       <td className="px-5 py-4 text-right">
                         {payable ? (

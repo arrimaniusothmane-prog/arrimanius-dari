@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, Share2, Globe, MessageCircle, Phone, Mail } from "lucide-react";
+import { Building2, Share2, Globe, MessageCircle, Mail, Phone } from "lucide-react";
 
 const sections = [
   {
@@ -9,6 +9,16 @@ const sections = [
       { href: "/invest", label: "Investir" },
       { href: "/buy", label: "Acheter" },
       { href: "/sell", label: "Vendre" },
+    ],
+  },
+  {
+    title: "Services & Travaux",
+    links: [
+      { href: "/construction", label: "Construction" },
+      { href: "/construction#renovation", label: "Rénovation" },
+      { href: "/construction#agencement", label: "Agencement" },
+      { href: "/construction#realisations", label: "Nos réalisations" },
+      { href: "/construction#devis", label: "Demander un devis" },
     ],
   },
   {
@@ -32,10 +42,30 @@ const sections = [
 ];
 
 const socials = [
-  { icon: Share2, label: "Partager", href: "#" },
-  { icon: Globe, label: "Site", href: "#" },
-  { icon: MessageCircle, label: "Messagerie", href: "#" },
-  { icon: Mail, label: "Email", href: "#" },
+  {
+    icon: Globe,
+    label: "Site DarEstate",
+    href: "https://www.darestimate.ma",
+    external: true,
+  },
+  {
+    icon: MessageCircle,
+    label: "WhatsApp",
+    href: "https://wa.me/212522000000",
+    external: true,
+  },
+  {
+    icon: Share2,
+    label: "Partager DarEstate",
+    href: "https://twitter.com/intent/tweet?url=https%3A%2F%2Fwww.darestimate.ma&text=DarEstate%20%E2%80%94%20Immobilier%20de%20confiance%20au%20Maroc",
+    external: true,
+  },
+  {
+    icon: Mail,
+    label: "Email",
+    href: "mailto:contact@darestimate.ma",
+    external: false,
+  },
 ];
 
 export function Footer() {
@@ -113,6 +143,8 @@ export function Footer() {
                 <Link
                   key={s.label}
                   href={s.href}
+                  target={s.external ? "_blank" : undefined}
+                  rel={s.external ? "noopener noreferrer" : undefined}
                   aria-label={s.label}
                   className="flex size-9 items-center justify-center rounded-full bg-white/5 text-white/60 transition-all hover:bg-gold hover:text-white"
                 >

@@ -12,9 +12,14 @@ import {
 import type { Lead } from "@/types";
 import { LeadStatus } from "@/types";
 import { getLeads, updateLeadStatus } from "@/services/leadService";
-import { mockProperties } from "@/data/properties";
+import {
+  propertyById,
+  leadStatusLabel,
+  leadStatusBadge,
+  leadStatusOrder,
+} from "@/lib/labels";
 import { DashboardHeader } from "@/components/dashboard/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -23,58 +28,22 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { formatDate, cn } from "@/lib/utils";
-
-const SELLER_ID = "seller-1";
-
-const statusLabel: Record<LeadStatus, string> = {
-  [LeadStatus.NEW]: "Nouveau",
-  [LeadStatus.CONTACTED]: "Contacté",
-  [LeadStatus.VISIT_REQUESTED]: "Visite demandée",
-  [LeadStatus.VISIT_COMPLETED]: "Visite effectuée",
-  [LeadStatus.OFFER_MADE]: "Offre faite",
-  [LeadStatus.NEGOTIATION]: "Négociation",
-  [LeadStatus.SOLD]: "Vendu",
-  [LeadStatus.CANCELLED]: "Annulé",
-};
-
-const statusBadgeClass: Record<LeadStatus, string> = {
-  [LeadStatus.NEW]: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
-  [LeadStatus.CONTACTED]: "bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300",
-  [LeadStatus.VISIT_REQUESTED]: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  [LeadStatus.VISIT_COMPLETED]: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  [LeadStatus.OFFER_MADE]: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
-  [LeadStatus.NEGOTIATION]: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
-  [LeadStatus.SOLD]: "bg-gold/20 text-gold",
-  [LeadStatus.CANCELLED]: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
-};
-
-const leadStatusOrder = [
-  LeadStatus.NEW,
-  LeadStatus.CONTACTED,
-  LeadStatus.VISIT_REQUESTED,
-  LeadStatus.VISIT_COMPLETED,
-  LeadStatus.OFFER_MADE,
-  LeadStatus.NEGOTIATION,
-  LeadStatus.SOLD,
-  LeadStatus.CANCELLED,
-];
+import { formatDate } from "@/lib/utils";
+import { useCurrentSellerId } from "@/hooks/useCurrentSeller";
 
 export default function SellerLeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const sellerId = useCurrentSellerId();
 
   useEffect(() => {
     getLeads()
-      .then((all) => setLeads(all.filter((l) => l.sellerId === SELLER_ID)))
+      .then((all) => setLeads(all.filter((l) => l.sellerId === sellerId)))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
-
-  const propertyFor = (propertyId: string) =>
-    mockProperties.find((p) => p.id === propertyId);
+  }, [sellerId]);
 
   const handleStatusChange = async (lead: Lead, status: LeadStatus) => {
     setUpdatingId(lead.id);
@@ -122,7 +91,7 @@ export default function SellerLeadsPage() {
       ) : (
         <div className="space-y-4">
           {leads.map((lead) => {
-            const property = propertyFor(lead.propertyId);
+            const property = propertyById(lead.propertyId);
             return (
               <div
                 key={lead.id}
@@ -139,9 +108,10 @@ export default function SellerLeadsPage() {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-display text-base font-semibold">{lead.name}</p>
-                          <Badge className={cn("border-transparent", statusBadgeClass[lead.status])}>
-                            {statusLabel[lead.status]}
-                          </Badge>
+                          <StatusBadge
+                            className={leadStatusBadge[lead.status]}
+                            label={leadStatusLabel[lead.status]}
+                          />
                         </div>
                         <p className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
                           <MapPin className="size-3.5" />
@@ -196,7 +166,7 @@ export default function SellerLeadsPage() {
                       <SelectContent align="end" className="w-48">
                         {leadStatusOrder.map((s) => (
                           <SelectItem key={s} value={s}>
-                            {statusLabel[s]}
+                            {leadStatusLabel[s]}
                           </SelectItem>
                         ))}
                       </SelectContent>

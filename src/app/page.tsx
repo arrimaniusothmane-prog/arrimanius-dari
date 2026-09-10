@@ -12,6 +12,14 @@ import { HeroSearch } from "@/components/sections/hero-search";
 import { FeaturedProperties } from "@/components/sections/featured-properties";
 import { PropertyCategory } from "@/types";
 import { Button } from "@/components/ui/button";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "DarEstate — Le marché immobilier premium au Maroc",
+  description:
+    "Découvrez des appartements, villas et terrains sélectionnés au Maroc. Un marché immobilier premium avec biens vérifiés, propriétaires vérifiés et transactions accompagnées.",
+  path: "/",
+});
 
 const categories: {
   value: PropertyCategory;
@@ -171,7 +179,7 @@ export default async function HomePage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="rounded-full border-white/30 text-white hover:bg-white/10 hover:text-white"
+                className="rounded-full border-gold/60 text-gold hover:bg-gold/10 hover:border-gold hover:text-gold"
               >
                 Espace vendeur
               </Button>

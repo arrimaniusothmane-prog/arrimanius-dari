@@ -26,6 +26,7 @@ export enum LeadStatus {
   NEW = "NEW",
   CONTACTED = "CONTACTED",
   VISIT_REQUESTED = "VISIT_REQUESTED",
+  VISIT_CONFIRMED = "VISIT_CONFIRMED",
   VISIT_COMPLETED = "VISIT_COMPLETED",
   OFFER_MADE = "OFFER_MADE",
   NEGOTIATION = "NEGOTIATION",
@@ -53,6 +54,8 @@ export enum CommissionStatus {
   CANCELLED = "CANCELLED",
 }
 
+export type UserStatus = "ACTIF" | "SUSPENDU";
+
 export interface User {
   id: string;
   name: string;
@@ -62,7 +65,11 @@ export interface User {
   role: UserRole;
   createdAt: string;
   isVerified: boolean;
+  status: UserStatus;
   companyName?: string;
+  bio?: string;
+  location?: string;
+  licenseNumber?: string;
 }
 
 export interface PropertyImage {
@@ -166,6 +173,8 @@ export interface Offer {
   propertyId: string;
   buyerId: string;
   price: number;
+  counterPrice?: number;
+  counterMessage?: string;
   message: string;
   preferredContact: string;
   status: OfferStatus;
