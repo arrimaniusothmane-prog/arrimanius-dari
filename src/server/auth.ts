@@ -88,6 +88,11 @@ export async function authenticate(
       "Ce compte a été suspendu. Contactez l'administrateur pour le restaurer.",
       403
     );
+  if (!isMainAdmin(user))
+    throw new ApiError(
+      "Accès restreint : seul le compte administrateur peut se connecter.",
+      403
+    );
   if (user.password !== password)
     throw new ApiError("Mot de passe incorrect.", 401);
   return user;

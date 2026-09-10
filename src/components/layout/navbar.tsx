@@ -193,7 +193,7 @@ export function Navbar() {
               <Link
                 href="/login"
                 className={cn(
-                  "hidden rounded-full px-4 py-2 text-sm font-medium transition-colors sm:block",
+                  "rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4",
                   onHero && !scrolled
                     ? "text-white/85 hover:bg-white/10 hover:text-white"
                     : "text-muted-foreground hover:text-foreground"

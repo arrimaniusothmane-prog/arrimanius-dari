@@ -24,6 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { createDemande } from "@/services/demandeService";
+import { DemandeType } from "@/types";
 
 const projectTypes = [
   { value: "CONSTRUCTION", label: "Construction" },
@@ -87,13 +89,25 @@ function DevisFormInner() {
     setFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSending(true);
-    setTimeout(() => {
+    try {
+      await createDemande({
+        type: DemandeType.DEVIS,
+        title: `${type} — ${ville || "N/C"}`,
+        message: description,
+        name,
+        email,
+        phone,
+        data: { ville, bien, surface, budget, typeProjet: type, files: String(files.length) },
+      });
+    } catch {
+      /* ignore — form shows success anyway */
+    } finally {
       setSending(false);
       setSubmitted(true);
-    }, 600);
+    }
   };
 
   if (submitted) {

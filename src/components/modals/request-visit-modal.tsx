@@ -6,6 +6,8 @@ import type { Property } from "@/types";
 import { LeadStatus } from "@/types";
 import { createLead, createVisit } from "@/services/leadService";
 import { useAuth } from "@/components/providers/auth-provider";
+import { createDemande } from "@/services/demandeService";
+import { DemandeType } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,6 +48,20 @@ export function RequestVisitModal({
     e.preventDefault();
     setSubmitting(true);
     try {
+      await createDemande({
+        type: DemandeType.VISITE,
+        title: `Visite — ${property.title}`,
+        message: form.message || `Date: ${form.date} à ${form.time}, ${form.visitors} visiteur(s)`,
+        name: user?.name ?? "Acheteur",
+        email: user?.email ?? "",
+        phone: form.phone,
+        data: {
+          propertyId: property.id,
+          date: form.date,
+          time: form.time,
+          visitors: form.visitors,
+        },
+      });
       const lead = await createLead({
         propertyId: property.id,
         buyerId: user?.id ?? "buyer-1",

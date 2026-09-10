@@ -3,17 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
+import { Building2, Eye, EyeOff, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
-
-const demoAccounts = [
-  { label: "Acheteur", email: "youssef@example.com", role: "BUYER" },
-  { label: "Vendeur", email: "mohamed@example.com", role: "SELLER" },
-];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,25 +24,6 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     const result = await login(email, password);
-    setLoading(false);
-    if (!result.ok) {
-      setError(result.error);
-      return;
-    }
-    const user = result.user;
-    const isMainAdmin =
-      user.role === "ADMIN" &&
-      user.email.trim().toLowerCase() === "arrimaniusothmane@gmail.com";
-    if (isMainAdmin) router.push("/admin");
-    else if (user.role === "SELLER" || user.role === "AGENT")
-      router.push("/seller");
-    else router.push("/buyer");
-  };
-
-  const quickLogin = async (demoEmail: string) => {
-    setError(null);
-    setLoading(true);
-    const result = await login(demoEmail, "demo1234");
     setLoading(false);
     if (!result.ok) {
       setError(result.error);
@@ -162,31 +138,9 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-5 text-center text-sm text-muted-foreground">
-            Pas encore de compte ?{" "}
-            <Link href="/register" className="font-medium text-gold hover:underline">
-              Créer un compte
-            </Link>
-          </div>
-        </div>
-
-        {/* Demo accounts */}
-        <div className="mt-6 rounded-3xl border border-dashed border-border bg-sand/50 p-5">
-          <p className="text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Comptes de démonstration
-          </p>
-          <div className="mt-3 grid gap-2">
-            {demoAccounts.map((acc) => (
-              <button
-                key={acc.email}
-                onClick={() => quickLogin(acc.email)}
-                disabled={loading}
-                className="flex items-center justify-between rounded-full border border-border bg-card px-4 py-2.5 text-sm transition-colors hover:border-gold/60 disabled:opacity-50"
-              >
-                <span className="font-medium">{acc.role}</span>
-                <span className="text-muted-foreground">{acc.email}</span>
-              </button>
-            ))}
+          <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-sand/60 px-4 py-3 text-center text-sm text-muted-foreground">
+            <Lock className="size-4 shrink-0 text-gold" />
+            Accès réservé à l&apos;administrateur de la plateforme.
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Building2, Sparkles, Inbox, CalendarCheck2, FileCheck, ArrowLeftRight, Wallet, HandCoins, Users, UserRound, ShieldCheck, ShieldAlert, BadgeCheck, Flag, ArrowRight } from "lucide-react";
+import { LayoutDashboard, Building2, Sparkles, Inbox, CalendarCheck2, FileCheck, ArrowLeftRight, Wallet, HandCoins, Users, UserRound, ShieldCheck, ShieldAlert, BadgeCheck, Flag, ArrowRight, Mail } from "lucide-react";
 import { DashboardHeader, StatCard } from "@/components/dashboard/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +17,8 @@ import type { DashboardStats, Transaction } from "@/types";
 import { publicUsers } from "@/data/properties";
 import { UserRole } from "@/types";
 import { formatPrice, formatDate, cn } from "@/lib/utils";
+import { listDemandes } from "@/services/demandeService";
+import { DemandeStatus } from "@/types";
 
 const growthData = [12, 18, 15, 22, 19, 26, 31, 28, 34, 39, 44, 49];
 
@@ -46,6 +48,7 @@ function userName(id: string) {
 export default function AdminOverviewPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [demandesCount, setDemandesCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,6 +59,9 @@ export default function AdminOverviewPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+    listDemandes()
+      .then((d) => setDemandesCount(d.filter((x) => x.status === DemandeStatus.NOUVELLE).length))
+      .catch(() => {});
   }, []);
 
   const maxGrowth = Math.max(...growthData);
@@ -80,6 +86,7 @@ export default function AdminOverviewPage() {
         <StatCard icon={LayoutDashboard} label="Total utilisateurs" value={chartValue ?? stats?.totalUsers ?? 0} />
         <StatCard icon={Building2} label="Biens actifs" value={chartValue ?? stats?.activeProperties ?? 0} />
         <StatCard icon={Sparkles} label="Nouveaux biens" value={chartValue ?? stats?.newProperties ?? 0} />
+        <StatCard icon={Mail} label="Demandes en attente" value={demandesCount} accent />
         <StatCard icon={Inbox} label="Total leads" value={chartValue ?? stats?.totalLeads ?? 0} />
         <StatCard icon={CalendarCheck2} label="Visites" value={chartValue ?? stats?.visits ?? 0} />
         <StatCard icon={FileCheck} label="Offres" value={chartValue ?? stats?.offers ?? 0} />

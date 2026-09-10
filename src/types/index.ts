@@ -225,6 +225,35 @@ export interface Notification {
   createdAt: string;
 }
 
+export enum DemandeType {
+  DEVIS = "DEVIS",
+  CONTACT = "CONTACT",
+  CONTACT_BIEN = "CONTACT_BIEN",
+  VISITE = "VISITE",
+  OFFRE = "OFFRE",
+  PUBLICATION = "PUBLICATION",
+}
+
+export enum DemandeStatus {
+  NOUVELLE = "NOUVELLE",
+  EN_COURS = "EN_COURS",
+  TRAITEE = "TRAITEE",
+}
+
+export interface Demande {
+  id: string;
+  type: DemandeType;
+  status: DemandeStatus;
+  title: string;
+  message: string;
+  name: string;
+  email: string;
+  phone: string;
+  data: Record<string, string>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Review {
   id: string;
   reviewerId: string;

@@ -6,6 +6,8 @@ import type { Property } from "@/types";
 import { LeadStatus } from "@/types";
 import { createLead, createVisit } from "@/services/leadService";
 import { useAuth } from "@/components/providers/auth-provider";
+import { createDemande } from "@/services/demandeService";
+import { DemandeType } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,6 +44,18 @@ export function ContactSellerModal({
     e.preventDefault();
     setSubmitting(true);
     try {
+      await createDemande({
+        type: DemandeType.CONTACT_BIEN,
+        title: `Contact vendeur — ${property.title}`,
+        message: form.message,
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        data: {
+          propertyId: property.id,
+          requestVisit: String(form.requestVisit),
+        },
+      });
       const lead = await createLead({
         propertyId: property.id,
         buyerId: user?.id ?? "buyer-1",

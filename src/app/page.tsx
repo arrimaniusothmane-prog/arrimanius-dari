@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   BadgeCheck,
   CalendarCheck,
+  HardHat,
   ShieldCheck,
 } from "lucide-react";
 import { getProperties } from "@/services/propertyService";
@@ -130,6 +131,70 @@ export default async function HomePage() {
             >
               Voir toutes les annonces <ArrowRight className="size-4" />
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* CONSTRUCTION — services */}
+      <section className="relative overflow-hidden">
+        <Image
+          src="https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1600&h=900&fit=crop"
+          alt="Chantier de construction DarEstate"
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/80 to-ink/55" />
+        <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center gap-8 px-4 py-16 sm:px-6 lg:flex-row lg:justify-between lg:px-8 lg:py-20">
+          <div className="max-w-xl text-center lg:text-left">
+            <span className="inline-flex items-center gap-2 rounded-full bg-gold/15 px-4 py-1.5 text-sm font-semibold text-gold">
+              <HardHat className="size-4" />
+              Construction · Rénovation · Agencement
+            </span>
+            <h2 className="mt-5 font-display text-3xl font-semibold text-white sm:text-4xl">
+              Votre projet de construction,{" "}
+              <span className="font-serif italic text-gold">clé en main.</span>
+            </h2>
+            <p className="mt-4 text-pretty text-white/75">
+              De la conception à la livraison : construction de villas,
+              rénovation d&apos;appartements et agencement intérieur par une
+              équipe unique. Devis gratuit sous 48h.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
+              <Link href="/construction">
+                <Button size="lg" className="w-full rounded-full bg-gold text-ink hover:bg-gold/90 sm:w-auto">
+                  Découvrir le service <ArrowRight className="ml-2 size-4" />
+                </Button>
+              </Link>
+              <Link href="/construction#devis">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full rounded-full border-gold/60 text-gold hover:bg-gold/10 hover:border-gold hover:text-gold sm:w-auto"
+                >
+                  Demander un devis
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid w-full max-w-sm grid-cols-2 gap-3">
+            {[
+              { value: "+120", label: "Projets accompagnés" },
+              { value: "12", label: "Corps de métier intégrés" },
+              { value: "100%", label: "Chantiers suivis" },
+              { value: "48h", label: "Délai de réponse devis" },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className="rounded-2xl bg-white/10 px-4 py-4 text-center backdrop-blur-md"
+              >
+                <p className="tnum font-display text-2xl font-semibold text-gold">
+                  {s.value}
+                </p>
+                <p className="mt-1 text-xs text-white/75">{s.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

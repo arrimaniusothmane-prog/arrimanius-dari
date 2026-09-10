@@ -9,6 +9,7 @@ import {
   Send,
   CheckCircle2,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Link from "next/link";
+import { createDemande } from "@/services/demandeService";
+import { DemandeType } from "@/types";
 
 const contactCards = [
   {
@@ -65,15 +68,33 @@ export function ContactForm() {
   const [form, setForm] = useState(initialForm);
   const [submitted, setSubmitted] = useState(false);
 
+  const [sending, setSending] = useState(false);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSending(true);
+    try {
+      await createDemande({
+        type: DemandeType.CONTACT,
+        title: form.sujet || "Contact général",
+        message: form.message,
+        name: form.nom,
+        email: form.email,
+        phone: form.telephone,
+        data: { sujet: form.sujet },
+      });
+    } catch {
+      /* ignore */
+    } finally {
+      setSending(false);
+      setSubmitted(true);
+    }
   };
 
   const handleReset = () => {
@@ -261,9 +282,18 @@ export function ContactForm() {
                   <Button
                     type="submit"
                     size="lg"
+                    disabled={sending}
                     className="w-full rounded-full bg-gold text-white hover:bg-gold/90"
                   >
-                    Envoyer le message <Send className="ml-2 size-4" />
+                    {sending ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" /> Envoi en cours…
+                      </>
+                    ) : (
+                      <>
+                        Envoyer le message <Send className="ml-2 size-4" />
+                      </>
+                    )}
                   </Button>
                 </form>
               </>

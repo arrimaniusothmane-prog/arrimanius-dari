@@ -21,8 +21,9 @@ import {
   Star,
 } from "lucide-react";
 import type { Property } from "@/types";
-import { PropertyCategory, PropertyStatus } from "@/types";
+import { PropertyCategory, PropertyStatus, DemandeType } from "@/types";
 import { addProperty } from "@/services/propertyService";
+import { createDemande } from "@/services/demandeService";
 import { categoryLabel } from "@/lib/labels";
 import { useCurrentSellerId } from "@/hooks/useCurrentSeller";
 import { DashboardHeader } from "@/components/dashboard/dashboard-shell";
@@ -358,6 +359,25 @@ export default function SellerAddPropertyPage() {
       };
 
       await addProperty(propertyData);
+      try {
+        await createDemande({
+          type: DemandeType.PUBLICATION,
+          title: draft.title.trim(),
+          message: draft.description.trim(),
+          name: draft.title.trim(),
+          email: "",
+          phone: "",
+          data: {
+            category: draft.category,
+            city: draft.city,
+            price: draft.price,
+            surface: draft.surface,
+            sellerId,
+          },
+        });
+      } catch {
+        /* property already created, ignore demande failure */
+      }
       setPublished(true);
     } finally {
       setPublishing(false);

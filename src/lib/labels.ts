@@ -1,5 +1,7 @@
 import {
   CommissionStatus,
+  DemandeStatus,
+  DemandeType,
   LeadStatus,
   OfferStatus,
   PropertyCategory,
@@ -122,3 +124,33 @@ export function propertyById(id: string) {
 export function userById(id: string) {
   return mockUsers.find((u) => u.id === id);
 }
+
+export const demandeTypeLabel: Record<DemandeType, string> = {
+  [DemandeType.DEVIS]: "Demande de devis",
+  [DemandeType.CONTACT]: "Contact général",
+  [DemandeType.CONTACT_BIEN]: "Contact vendeur",
+  [DemandeType.VISITE]: "Demande de visite",
+  [DemandeType.OFFRE]: "Offre d'achat",
+  [DemandeType.PUBLICATION]: "Publication de bien",
+};
+
+export const demandeTypeBadge: Record<DemandeType, string> = {
+  [DemandeType.DEVIS]: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+  [DemandeType.CONTACT]: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  [DemandeType.CONTACT_BIEN]: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+  [DemandeType.VISITE]: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  [DemandeType.OFFRE]: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
+  [DemandeType.PUBLICATION]: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
+};
+
+export const demandeStatusLabel: Record<DemandeStatus, string> = {
+  [DemandeStatus.NOUVELLE]: "Nouvelle",
+  [DemandeStatus.EN_COURS]: "En cours",
+  [DemandeStatus.TRAITEE]: "Traitée",
+};
+
+export const demandeStatusBadge: Record<DemandeStatus, string> = {
+  [DemandeStatus.NOUVELLE]: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+  [DemandeStatus.EN_COURS]: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  [DemandeStatus.TRAITEE]: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+};

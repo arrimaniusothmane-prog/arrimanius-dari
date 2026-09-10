@@ -6,6 +6,8 @@ import type { Property } from "@/types";
 import { LeadStatus, OfferStatus } from "@/types";
 import { createOffer, createLead } from "@/services/leadService";
 import { useAuth } from "@/components/providers/auth-provider";
+import { createDemande } from "@/services/demandeService";
+import { DemandeType } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +48,19 @@ export function MakeOfferModal({
     e.preventDefault();
     setSubmitting(true);
     try {
+      await createDemande({
+        type: DemandeType.OFFRE,
+        title: `Offre ${price.toLocaleString("fr-FR")} MAD — ${property.title}`,
+        message: form.message || `Offre de ${price} MAD`,
+        name: user?.name ?? "Acheteur",
+        email: user?.email ?? "",
+        phone: user?.phone ?? "",
+        data: {
+          propertyId: property.id,
+          prix: String(price),
+          contact: form.contact,
+        },
+      });
       await createOffer({
         propertyId: property.id,
         buyerId: user?.id ?? "buyer-1",

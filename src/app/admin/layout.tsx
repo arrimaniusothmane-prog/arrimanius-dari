@@ -14,12 +14,15 @@ import {
   ShieldCheck,
   UserRound,
   Users,
+  Mail,
 } from "lucide-react";
 import { DashboardShell, type NavItem } from "@/components/dashboard/dashboard-shell";
+import { DemandesNavBadge } from "@/components/dashboard/demandes-nav-badge";
 import { AdminGuard } from "./admin-guard";
 
 const items: NavItem[] = [
   { label: "Vue d'ensemble", href: "/admin", icon: LayoutDashboard },
+  { label: "Demandes", href: "/admin/demands", icon: Mail, badge: <DemandesNavBadge /> },
   { label: "Vendeurs", href: "/admin/sellers", icon: Building2 },
   { label: "Acheteurs", href: "/admin/buyers", icon: UserRound },
   { label: "Utilisateurs", href: "/admin/users", icon: Users },

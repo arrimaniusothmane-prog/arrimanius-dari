@@ -11,6 +11,7 @@ export type NavItem = {
   label: string;
   href: string;
   icon: LucideIcon;
+  badge?: React.ReactNode;
 };
 
 export function DashboardShell({
@@ -71,7 +72,8 @@ export function DashboardShell({
                     <span className="whitespace-nowrap lg:whitespace-normal">
                       {item.label}
                     </span>
-                    {badge && active && (
+                    {item.badge}
+                    {badge && active && !item.badge && (
                       <span className="ml-auto rounded-full bg-gold px-2 py-0.5 text-[10px] font-bold text-ink">
                         {badge}
                       </span>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Heart, User, Search } from "lucide-react";
+import { Home, HardHat, Heart, User, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function MobileNav() {
@@ -11,6 +11,7 @@ export function MobileNav() {
   const items = [
     { href: "/", label: "Accueil", icon: Home },
     { href: "/properties", label: "Recherche", icon: Search },
+    { href: "/construction", label: "Construction", icon: HardHat },
     { href: "/favorites", label: "Favoris", icon: Heart },
     { href: "/account", label: "Compte", icon: User },
   ];
@@ -18,7 +19,7 @@ export function MobileNav() {
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden">
       <div className="glass border-t border-border/60 pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-4 h-16">
+        <div className="grid grid-cols-5 h-16">
           {items.map((item) => {
             const Icon = item.icon;
             const active =
